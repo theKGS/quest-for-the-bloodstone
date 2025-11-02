@@ -1,3 +1,4 @@
 *.o
 *.org
+*~
 /dist/CWSDPMI.EXE
