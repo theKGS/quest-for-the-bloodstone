@@ -9,7 +9,7 @@
 extern int player_x;
 extern int player_y;
 extern int player_facing;
-extern struct maptile *map_data;
+//extern struct maptile *map_data;
 
 struct maptile
 {
@@ -23,8 +23,9 @@ struct maptile
     int d_passable;
     int l_passable;
     int r_passable;
+    int solid;
 };
 
-void allocate_map();
+struct maptile *allocate_map();
 
 #endif

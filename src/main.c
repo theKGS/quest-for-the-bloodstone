@@ -7,108 +7,31 @@
 #include <stdlib.h>
 #include "map.h"
 #include "render.h"
+#include "utils.h"
 
-int getkey()
-{
-    if (keypressed())
-    {
-        if (key[KEY_W])
-        {
-            return KEY_W;
-        };
-        if (key[KEY_A])
-        {
-            return KEY_A;
-        };
-        if (key[KEY_S])
-        {
-            return KEY_S;
-        };
-        if (key[KEY_D])
-        {
-            return KEY_D;
-        };
-        if (key[KEY_Q])
-        {
-            return KEY_Q;
-        };
-        if (key[KEY_E])
-        {
-            return KEY_E;
-        };
-        if (key[KEY_ESC])
-        {
-            return KEY_ESC;
-        }
-    }
-
-    return 0;
-}
-
-int get_x_move_offset(int facing)
-{
-    switch (facing)
-    {
-    case F_NORTH:
-    case F_SOUTH:
-        return 0;
-    case F_EAST:
-        return 1;
-    default:
-        return -1;
-    }
-}
-
-int get_y_move_offset(int facing)
-{
-    switch (facing)
-    {
-    case F_EAST:
-    case F_WEST:
-        return 0;
-    case F_SOUTH:
-        return 1;
-    default:
-        return -1;
-    }
-}
-
-int get_next_facing(int facing)
-{
-    switch (facing)
-    {
-    case F_EAST:
-        return F_SOUTH;
-    case F_WEST:
-        return F_NORTH;
-    case F_SOUTH:
-        return F_WEST;
-    default:
-        return F_EAST;
-    }
-}
-
-int get_prev_facing(int facing)
-{
-    switch (facing)
-    {
-    case F_EAST:
-        return F_NORTH;
-    case F_WEST:
-        return F_SOUTH;
-    case F_SOUTH:
-        return F_EAST;
-    default:
-        return F_WEST;
-    }
-}
+#define VIEW_X 64
+#define VIEW_Y 64
 
 int main(int argc, const char **argv)
 {
-    int posx = 2;
-    int posy = 2;
+    int posx = 8;
+    int posy = 8;
     int dirp = F_SOUTH;
-    int time_since_move = 0;
+    struct maptile *map = allocate_map();
+
+    map[4].solid = 1;
+    map[20].solid = 1;
+    map[40].solid = 1;
+    map[56].solid = 1;
+    map[63].solid = 1;
+    map[13].solid = 1;
+    map[14].solid = 1;
+    map[40 * 10 + 10].solid = 1;
+    map[40 * 20 + 20].solid = 1;
+    map[40 * 30 + 30].solid = 1;
+    map[40 * 30 + 31].solid = 1;
+    map[40 * 30 + 32].solid = 1;
+    map[40 * 31 + 32].solid = 1;
 
     if (allegro_init() != 0)
     {
@@ -117,8 +40,6 @@ int main(int argc, const char **argv)
 
     install_keyboard();
     install_timer();
-    // install_mouse();
-    // show_mouse(screen);
 
     if (set_gfx_mode(GFX_AUTODETECT, 320, 200, 0, 0) != 0)
     {
@@ -134,7 +55,7 @@ int main(int argc, const char **argv)
 
     if (bmp)
     {
-        set_palette(desktop_palette);
+        set_palette(default_palette);
         clear_to_color(screen, makecol(128, 0, 0));
 
         int k;
@@ -159,11 +80,11 @@ int main(int argc, const char **argv)
                 dirp = get_next_facing(dirp);
                 break;
             case KEY_A:
-                posx -= get_y_move_offset(dirp);
+                posx += get_y_move_offset(dirp);
                 posy -= get_x_move_offset(dirp);
                 break;
             case KEY_D:
-                posx += get_y_move_offset(dirp);
+                posx -= get_y_move_offset(dirp);
                 posy += get_x_move_offset(dirp);
                 break;
             case KEY_ESC:
@@ -173,14 +94,85 @@ int main(int argc, const char **argv)
             };
 
             // blit(bmp, screen, 0, 0, posx, posy, 64, 64);
-            clear_to_color(screen, 0);
-            rectfill(screen, posx * 4, posy * 4, posx * 4 + 4, posy * 4 + 4, 5);
+            clear_to_color(screen, 255);
+
+            for (int xp = 0; xp < 40; xp++)
+            {
+                for (int yp = 0; yp < 40; yp++)
+                {
+                    if (map[yp * 40 + xp].solid)
+                        rectfill(screen, xp * 4, yp * 4, xp * 4 + 3, yp * 4 + 3, 6);
+                }
+            }
+
+            rectfill(screen, posx * 4, posy * 4, posx * 4 + 3, posy * 4 + 3, 5);
+
+            // F
             rectfill(screen,
-                     (posx + get_x_move_offset(dirp)) * 4,
-                     (posy + get_y_move_offset(dirp)) * 4,
-                     (posx + get_x_move_offset(dirp)) * 4 + 4,
-                     (posy + get_y_move_offset(dirp)) * 4 + 4, 6);
-            rest(150);
+                     (posx + get_x_move_offset(dirp)) * 4 + 1,
+                     (posy + get_y_move_offset(dirp)) * 4 + 1,
+                     (posx + get_x_move_offset(dirp)) * 4 + 2,
+                     (posy + get_y_move_offset(dirp)) * 4 + 2, 6);
+
+            // FF
+            rectfill(screen,
+                     (posx + 2 * get_x_move_offset(dirp)) * 4 + 1,
+                     (posy + 2 * get_y_move_offset(dirp)) * 4 + 1,
+                     (posx + 2 * get_x_move_offset(dirp)) * 4 + 2,
+                     (posy + 2 * get_y_move_offset(dirp)) * 4 + 2, 6);
+
+            // FFF
+            rectfill(screen,
+                     (posx + 3 * get_x_move_offset(dirp)) * 4 + 1,
+                     (posy + 3 * get_y_move_offset(dirp)) * 4 + 1,
+                     (posx + 3 * get_x_move_offset(dirp)) * 4 + 2,
+                     (posy + 3 * get_y_move_offset(dirp)) * 4 + 2, 6);
+
+            // FL
+            rectfill(screen,
+                     (posx + get_x_move_offset(dirp) + get_x_move_offset(get_prev_facing(dirp))) * 4 + 1,
+                     (posy + get_y_move_offset(dirp) + get_y_move_offset(get_prev_facing(dirp))) * 4 + 1,
+                     (posx + get_x_move_offset(dirp) + get_x_move_offset(get_prev_facing(dirp))) * 4 + 2,
+                     (posy + get_y_move_offset(dirp) + get_y_move_offset(get_prev_facing(dirp))) * 4 + 2, 6);
+
+            // FR
+            rectfill(screen,
+                     (posx + get_x_move_offset(dirp) + get_x_move_offset(get_next_facing(dirp))) * 4 + 1,
+                     (posy + get_y_move_offset(dirp) + get_y_move_offset(get_next_facing(dirp))) * 4 + 1,
+                     (posx + get_x_move_offset(dirp) + get_x_move_offset(get_next_facing(dirp))) * 4 + 2,
+                     (posy + get_y_move_offset(dirp) + get_y_move_offset(get_next_facing(dirp))) * 4 + 2, 6);
+
+            // FFL
+            rectfill(screen,
+                     (posx + 2 * get_x_move_offset(dirp) + get_x_move_offset(get_prev_facing(dirp))) * 4 + 1,
+                     (posy + 2 * get_y_move_offset(dirp) + get_y_move_offset(get_prev_facing(dirp))) * 4 + 1,
+                     (posx + 2 * get_x_move_offset(dirp) + get_x_move_offset(get_prev_facing(dirp))) * 4 + 2,
+                     (posy + 2 * get_y_move_offset(dirp) + get_y_move_offset(get_prev_facing(dirp))) * 4 + 2, 6);
+
+            // FFR
+            rectfill(screen,
+                     (posx + 2 * get_x_move_offset(dirp) + get_x_move_offset(get_next_facing(dirp))) * 4 + 1,
+                     (posy + 2 * get_y_move_offset(dirp) + get_y_move_offset(get_next_facing(dirp))) * 4 + 1,
+                     (posx + 2 * get_x_move_offset(dirp) + get_x_move_offset(get_next_facing(dirp))) * 4 + 2,
+                     (posy + 2 * get_y_move_offset(dirp) + get_y_move_offset(get_next_facing(dirp))) * 4 + 2, 6);
+
+            // FFLL
+            rectfill(screen,
+                     (posx + 2 * get_x_move_offset(dirp) + 2 * get_x_move_offset(get_prev_facing(dirp))) * 4 + 1,
+                     (posy + 2 * get_y_move_offset(dirp) + 2 * get_y_move_offset(get_prev_facing(dirp))) * 4 + 1,
+                     (posx + 2 * get_x_move_offset(dirp) + 2 * get_x_move_offset(get_prev_facing(dirp))) * 4 + 2,
+                     (posy + 2 * get_y_move_offset(dirp) + 2 * get_y_move_offset(get_prev_facing(dirp))) * 4 + 2, 6);
+
+            // FFRR
+            rectfill(screen,
+                     (posx + 2 * get_x_move_offset(dirp) + 2 * get_x_move_offset(get_next_facing(dirp))) * 4 + 1,
+                     (posy + 2 * get_y_move_offset(dirp) + 2 * get_y_move_offset(get_next_facing(dirp))) * 4 + 1,
+                     (posx + 2 * get_x_move_offset(dirp) + 2 * get_x_move_offset(get_next_facing(dirp))) * 4 + 2,
+                     (posy + 2 * get_y_move_offset(dirp) + 2 * get_y_move_offset(get_next_facing(dirp))) * 4 + 2, 6);
+
+            // rectfill(screen, VIEW_X, VIEW_Y, VIEW_X + 176 - 1, VIEW_Y + 120 - 1, 13);
+
+            rest(350);
         } while (1);
     }
     return 0;

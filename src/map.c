@@ -4,10 +4,10 @@
 /*
     Allocates space for the map and sets all values to 0.
 */
-void allocate_map()
+struct maptile *allocate_map()
 {
-    //struct maptile *pm;
-    //map_data = malloc(40 * 40 * sizeof(struct maptile));
+    struct maptile *map_data;
+    map_data = malloc(40 * 40 * sizeof(struct maptile));
 
     for (int i = 0; i < 40 * 40; i++) {
         //map_data[i].u_tile = 0;
@@ -18,9 +18,8 @@ void allocate_map()
         //map_data[i].d_passable = 0;
         //map_data[i].l_passable = 0;
         //map_data[i].r_passable = 0;
+        map_data[i].solid = 0;
     }
-}
 
-void fill_render_array() {
-
+    return map_data;
 }
