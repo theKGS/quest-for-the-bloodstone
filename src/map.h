@@ -27,5 +27,6 @@ struct maptile
 };
 
 struct maptile *allocate_map();
+int issolid(struct maptile *map, int x, int y);
 
 #endif
