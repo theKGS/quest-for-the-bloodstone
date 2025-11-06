@@ -47,5 +47,5 @@ all: ${DISTDIR} ${DISTDIR}/${BIN} ${STATICDEST}
 static: ${STATICDEST}
 
 clean:
-	rm -rf ${DISTDIR}
+#	rm -rf ${DISTDIR}
 	rm -f ${OBJS}

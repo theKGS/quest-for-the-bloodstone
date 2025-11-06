@@ -118,3 +118,33 @@ int position_offset_to_y(int posy, int dirp, int lr_steps, int fb_steps)
     }
     return posy + fb_steps * get_y_move_offset(dirp) + lr_steps * get_y_move_offset(get_next_facing(dirp));
 }
+
+int depth_position(int posx, int posy, int dirp, int ex, int ey)
+{
+    switch (dirp)
+    {
+    case F_EAST:
+        return ex - posx;
+    case F_WEST:
+        return posx - ex;
+    case F_SOUTH:
+        return ey - posy;
+    default:
+        return posy - ey;
+    }
+}
+
+int horizontal_position(int posx, int posy, int dirp, int ex, int ey)
+{
+    switch (dirp)
+    {
+    case F_EAST:
+        return posy - ey;
+    case F_WEST:
+        return ey - posy;
+    case F_SOUTH:
+        return posx - ex;
+    default:
+        return ex - posx;
+    }
+}
