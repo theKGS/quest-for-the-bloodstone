@@ -10,12 +10,14 @@
 #include "utils.h"
 #include "enemy.h"
 
+#define MAX_SQUADS 4
 
 int main(int argc, const char **argv)
 {
     int posx = 8;
     int posy = 8;
     int dirp = F_SOUTH;
+    int triggers = 0;
     struct maptile *map = allocate_map();
     srand(0);
 
@@ -50,6 +52,17 @@ int main(int argc, const char **argv)
         }
     }
 
+    if (install_sound(DIGI_AUTODETECT, MIDI_AUTODETECT, NULL) != 0)
+    {
+        allegro_message("Error initialising sound system\n%s\n", allegro_error);
+        return 1;
+    }
+
+    MIDI *music;
+    music = load_midi("bsmus01.mid");
+
+    play_midi(music, TRUE);
+
     PALETTE palette;
     BITMAP *page1;
     BITMAP *page2;
@@ -68,6 +81,13 @@ int main(int argc, const char **argv)
 
     BITMAP *walls1;
     walls1 = load_tga("walls1.tga", palette);
+
+    BITMAP *bottle;
+    bottle = load_tga("i01_bot.tga", 0);
+    int held_item = 0;
+
+    SAMPLE *snd_take_item = load_wav("snd_take.wav");
+    SAMPLE *snd_drop_item = load_wav("snd_drop.wav");
 
     BITMAP *flat_1 = create_bitmap(128, 96);
     BITMAP *flat_1a = create_bitmap(24, 96);
@@ -92,37 +112,55 @@ int main(int argc, const char **argv)
     blit(walls1, angl_4, 272, 0, 0, 0, 8, 25);
 
     set_palette(palette);
-    clear_to_color(activepage, makecol(128, 0, 0));
 
     BITMAP *enemy_one_cultist = load_bitmap("enemy_1.tga", palette);
 
     struct enemy cultist;
-    struct squad group;
-    group.units[0] = &cultist;
-    group.units[1] = 0;
-    group.units[2] = 0;
-    group.units[3] = 0;
+    struct squad group[MAX_SQUADS];
+
+    for (int i = 0; i < MAX_SQUADS; i++)
+    {
+        group[i].x = 0;
+        group[i].y = 0;
+        for (int p = 0; p < 4; p++)
+        {
+            group[i].units[p] = 0;
+        }
+    }
+
+    group[0].units[0] = &cultist;
+    group[1].units[0] = &cultist;
+    group[2].units[0] = &cultist;
+    group[3].units[0] = &cultist;
+    group[4].units[0] = &cultist;
+    group[5].units[0] = &cultist;
+    group[6].units[0] = &cultist;
+    group[7].units[0] = &cultist;
 
     cultist.picture = enemy_one_cultist;
-    group.x = 2;
-    group.y = 2;
+    group[0].x = 0;
+    group[0].y = 2;
+    group[1].x = 3;
+    group[1].y = 3;
+    group[2].x = 4;
+    group[2].y = 4;
+    group[3].x = 5;
+    group[3].y = 5;
+    group[4].x = 6;
+    group[4].y = 6;
+    group[5].x = 7;
+    group[5].y = 7;
+    group[6].x = 8;
+    group[6].y = 8;
+    group[7].x = 9;
+    group[7].y = 9;
 
     int k;
     int wait = 0;
     int enemy_distance;
 
-    int render_queue_x[20];
-    int render_queue_z[20];
-
-    for (int i = 0; i < 20; i++)
-    {
-        render_queue_x[i] = 0;
-        render_queue_z[i] = 0;
-    }
-
     do
     {
-        wait = 0;
         k = getkey();
         switch (k)
         {
@@ -160,19 +198,27 @@ int main(int argc, const char **argv)
             break;
         };
 
-        // blit(bmp, screen, 0, 0, posx, posy, 64, 64);
-        clear_to_color(activepage, 255);
+        clear_to_color(activepage, makecol(0, 0, 0));
 
-        for (int xp = 0; xp < 40; xp++)
+        for (int xp = 0; xp < MAP_SIGHT * 2 + 1; xp++)
         {
-            for (int yp = 0; yp < 40; yp++)
+            for (int yp = 0; yp < MAP_SIGHT * 2 + 1; yp++)
             {
-                if (map[yp * 40 + xp].solid)
-                    rectfill(activepage, xp * 4, yp * 4, xp * 4 + 3, yp * 4 + 3, makecol(0, 255, 0));
+                if (issolid(map, posx + xp - MAP_SIGHT, posy + yp - MAP_SIGHT))
+                    rectfill(activepage,
+                             xp * MAP_TSIZE,
+                             yp * MAP_TSIZE,
+                             xp * MAP_TSIZE + MAP_TSIZE - 1,
+                             yp * MAP_TSIZE + MAP_TSIZE - 1,
+                             makecol(0, 255, 0));
             }
         }
 
-        rectfill(activepage, posx * 4, posy * 4, posx * 4 + 3, posy * 4 + 3, makecol(0, 0, 255));
+        rectfill(activepage,
+                 MAP_X + MAP_TSIZE * MAP_SIGHT,
+                 MAP_Y + MAP_TSIZE * MAP_SIGHT,
+                 MAP_X + MAP_TSIZE * MAP_SIGHT + MAP_TSIZE - 1,
+                 MAP_Y + MAP_TSIZE * MAP_SIGHT + MAP_TSIZE - 1, makecol(0, 0, 255));
 
         // Z depth = 0
         rectfill(activepage,
@@ -242,6 +288,20 @@ int main(int argc, const char **argv)
             draw_sprite(activepage, flat_3, VIEW_X + 63, VIEW_Y + 26);
         }
 
+        for (int i = 0; i < MAX_SQUADS; i++)
+        {
+            enemy_distance = depth_position(posx, posy, dirp, group[i].x, group[i].y);
+            if (enemy_distance == 3)
+            {
+                int offset = -32 * depth_position(posx, posy, get_next_facing(dirp), group[i].x, group[i].y);
+                stretch_sprite(activepage, enemy_one_cultist,
+                               VIEW_MID_X - enemy_one_cultist->w / 6 - offset,
+                               VIEW_MID_Y - enemy_one_cultist->h / 6,
+                               enemy_one_cultist->w / 6,
+                               enemy_one_cultist->h / 6);
+            }
+        }
+
         if (check_if_clear_and_solid(map, posx, posy, dirp, -1, 2, -1, 3))
         {
             draw_sprite(activepage, flat_3, VIEW_X + 63 - 48, VIEW_Y + 26);
@@ -264,15 +324,18 @@ int main(int argc, const char **argv)
 
         // Segments two steps away
 
-        enemy_distance = depth_position(posx, posy, dirp, group.x, group.y);
-        if (enemy_distance == 2)
+        for (int i = 0; i < MAX_SQUADS; i++)
         {
-            int offset = -48 * depth_position(posx, posy, get_next_facing(dirp), group.x, group.y);
-            stretch_sprite(activepage, enemy_one_cultist,
-                           VIEW_MID_X - enemy_one_cultist->w / 4 - offset,
-                           VIEW_MID_Y - enemy_one_cultist->h / 4,
-                           enemy_one_cultist->w / 2,
-                           enemy_one_cultist->h / 2);
+            enemy_distance = depth_position(posx, posy, dirp, group[i].x, group[i].y);
+            if (enemy_distance == 2)
+            {
+                int offset = -48 * depth_position(posx, posy, get_next_facing(dirp), group[i].x, group[i].y);
+                stretch_sprite(activepage, enemy_one_cultist,
+                               VIEW_MID_X - enemy_one_cultist->w / 4 - offset,
+                               VIEW_MID_Y - enemy_one_cultist->h / 4,
+                               enemy_one_cultist->w / 2,
+                               enemy_one_cultist->h / 2);
+            }
         }
 
         if (check_if_clear_and_solid(map, posx, posy, dirp, 0, 1, 0, 2))
@@ -297,7 +360,7 @@ int main(int argc, const char **argv)
 
         if (check_if_clear_and_solid(map, posx, posy, dirp, 0, 2, 1, 2))
         {
-            draw_sprite_h_flip(activepage, angl_3, VIEW_X + 176 - 47, VIEW_Y + 19);
+            draw_sprite_h_flip(activepage, angl_3, VIEW_X + 176 - 47 - 16, VIEW_Y + 19);
         }
 
         //
@@ -320,12 +383,12 @@ int main(int argc, const char **argv)
         //
         if (check_if_clear_and_solid(map, posx, posy, dirp, 0, 1, -1, 1))
         {
-            draw_sprite(activepage, angl_2, VIEW_X + 23, VIEW_Y + 6);
+            draw_sprite(activepage, angl_2, VIEW_X + 23, VIEW_Y + 8);
         }
 
         if (check_if_clear_and_solid(map, posx, posy, dirp, 0, 1, 1, 1))
         {
-            draw_sprite_h_flip(activepage, angl_2, VIEW_X + 176 - 49, VIEW_Y + 6);
+            draw_sprite_h_flip(activepage, angl_2, VIEW_X + 176 - 49, VIEW_Y + 8);
         }
 
         //
@@ -340,16 +403,30 @@ int main(int argc, const char **argv)
             draw_sprite_h_flip(activepage, angl_1, VIEW_X + 176 - 25, VIEW_Y);
         }
 
-        enemy_distance = depth_position(posx, posy, dirp, group.x, group.y);
-        if (enemy_distance == 1 && depth_position(posx, posy, get_next_facing(dirp), group.x, group.y) == 0)
+        for (int i = 0; i < MAX_SQUADS; i++)
         {
-            draw_sprite(activepage, enemy_one_cultist,
-                        VIEW_MID_X - enemy_one_cultist->w / 2,
-                        VIEW_MID_Y - enemy_one_cultist->h / 2);
+            enemy_distance = depth_position(posx, posy, dirp, group[i].x, group[i].y);
+            if (enemy_distance == 1 && depth_position(posx, posy, get_next_facing(dirp), group[i].x, group[i].y) == 0)
+            {
+                draw_sprite(activepage, enemy_one_cultist,
+                            VIEW_MID_X - enemy_one_cultist->w / 2,
+                            VIEW_MID_Y - enemy_one_cultist->h / 2);
+            }
         }
 
         // Draw viewport frame
         rect(activepage, VIEW_X - 1, VIEW_Y - 1, VIEW_X + 176, VIEW_Y + 120, makecol(255, 0, 0));
+
+        if (wait)
+        {
+            triggers += 1;
+            //play_sample(snd_take_item, 255, 128, 1000, 0);
+        }
+
+        textprintf_centre_ex(activepage, font, SCREEN_W / 2, 180,
+                             makecol(0, 100, 243), -1,
+                             "Steps %d!",
+                             triggers);
 
         show_video_bitmap(activepage);
 
@@ -364,6 +441,7 @@ int main(int argc, const char **argv)
 
         if (wait)
         {
+            wait = 0;
             rest(300);
         }
 
