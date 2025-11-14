@@ -5,6 +5,7 @@
 
 #include <allegro.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "map.h"
 #include "render.h"
 #include "utils.h"
@@ -12,7 +13,7 @@
 
 #define MAX_SQUADS 4
 
-int main(int argc, const char **argv)
+int gameloop()
 {
     int posx = 8;
     int posy = 8;
@@ -31,14 +32,6 @@ int main(int argc, const char **argv)
         }
     }
 
-    if (allegro_init() != 0)
-    {
-        return 1;
-    }
-
-    install_keyboard();
-    install_timer();
-
     if (set_gfx_mode(GFX_AUTODETECT, 320, 200, 0, 400) != 0)
     {
         if (set_gfx_mode(GFX_AUTODETECT, 320, 200, 0, 0) != 0)
@@ -52,14 +45,8 @@ int main(int argc, const char **argv)
         }
     }
 
-    if (install_sound(DIGI_AUTODETECT, MIDI_AUTODETECT, NULL) != 0)
-    {
-        allegro_message("Error initialising sound system\n%s\n", allegro_error);
-        return 1;
-    }
-
     MIDI *music;
-    music = load_midi("bsmus01.mid");
+    music = load_midi("bsmus02.mid");
 
     play_midi(music, TRUE);
 
@@ -86,7 +73,7 @@ int main(int argc, const char **argv)
     bottle = load_tga("i01_bot.tga", 0);
     int held_item = 0;
 
-    SAMPLE *snd_take_item = load_wav("snd_take.wav");
+    SAMPLE *snd_take_item = load_wav("snd_tak2.wav");
     SAMPLE *snd_drop_item = load_wav("snd_drop.wav");
 
     BITMAP *flat_1 = create_bitmap(128, 96);
@@ -420,7 +407,7 @@ int main(int argc, const char **argv)
         if (wait)
         {
             triggers += 1;
-            //play_sample(snd_take_item, 255, 128, 1000, 0);
+            play_sample(snd_take_item, 255, 128, 1000, 0);
         }
 
         textprintf_centre_ex(activepage, font, SCREEN_W / 2, 180,
@@ -448,6 +435,76 @@ int main(int argc, const char **argv)
     } while (1);
 
     return 0;
+}
+
+int musictest()
+{
+    printf("1) Track 1");
+    printf("2) Track 2");
+    printf("3) Track 3");
+    MIDI *song;
+
+    clear_keybuf();
+    do
+    {
+        while (!keypressed())
+        {
+        };
+
+        if (key[KEY_1])
+        {
+            song = load_midi("bsmus01.mid");
+            play_midi(song, 1);
+        }
+
+        if (key[KEY_2])
+        {
+            song = load_midi("bsmus02.mid");
+            play_midi(song, 1);
+        }
+
+        if (key[KEY_3])
+        {
+            song = load_midi("bsmus03.mid");
+            play_midi(song, 1);
+        }
+
+    } while (!key[KEY_ESC]);
+}
+
+int main(int argc, const char **argv)
+{
+    if (allegro_init() != 0)
+    {
+        return 1;
+    }
+
+    install_keyboard();
+    install_timer();
+
+    if (install_sound(DIGI_AUTODETECT, MIDI_AUTODETECT, NULL) != 0)
+    {
+        allegro_message("Error initialising sound system\n%s\n", allegro_error);
+        return 1;
+    }
+
+    set_gfx_mode(GFX_TEXT, 0, 0, 0, 0);
+    printf("1) Run game\n");
+    printf("2) Music test\n");
+
+    clear_keybuf();
+    while (!keypressed())
+    {
+    };
+
+    if (key[KEY_1])
+    {
+        gameloop();
+    }
+    if (key[KEY_2])
+    {
+        musictest();
+    }
 }
 
 END_OF_MAIN()
