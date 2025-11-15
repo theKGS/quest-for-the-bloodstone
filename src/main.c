@@ -472,6 +472,154 @@ int musictest()
     } while (!key[KEY_ESC]);
 }
 
+int inventorytest()
+{
+    if (set_gfx_mode(GFX_AUTODETECT, 320, 200, 0, 400) != 0)
+    {
+        if (set_gfx_mode(GFX_AUTODETECT, 320, 200, 0, 0) != 0)
+        {
+            if (set_gfx_mode(GFX_SAFE, 320, 200, 0, 0) != 0)
+            {
+                set_gfx_mode(GFX_TEXT, 0, 0, 0, 0);
+                allegro_message("Unable to set any graphic mode\n%s\n", allegro_error);
+                return 1;
+            }
+        }
+    }
+
+    BITMAP *page1;
+    BITMAP *page2;
+
+    page1 = create_video_bitmap(320, 200);
+    page2 = create_video_bitmap(320, 200);
+
+    if ((!page1) || (!page2))
+    {
+        set_gfx_mode(GFX_TEXT, 0, 0, 0, 0);
+        allegro_message("Unable to create two video memory pages\n");
+        return 1;
+    }
+
+    install_mouse();
+
+    BITMAP *activepage = page1;
+    PALETTE palette;
+
+    // BITMAP *testimage = load_tga("testart.tga", 0);
+    BITMAP *testimage = load_tga("testart.tga", palette);
+
+    BITMAP *item_sprites[3];
+
+    item_sprites[0] = create_bitmap(16, 16);
+    blit(testimage, item_sprites[0], 32, 0, 0, 0, 16, 16);
+    item_sprites[1] = create_bitmap(16, 16);
+    blit(testimage, item_sprites[1], 48, 0, 0, 0, 16, 16);
+    item_sprites[2] = create_bitmap(16, 16);
+    blit(testimage, item_sprites[2], 64, 0, 0, 0, 16, 16);
+
+    set_palette(palette);
+
+    SAMPLE *snd_take_item = load_wav("snd_tak2.wav");
+    SAMPLE *snd_drop_item = load_wav("snd_drop.wav");
+
+    int wait = 0;
+    int k = 0;
+
+    int inventory[16];
+    int held_item = 0;
+    for (int i = 0; i < 16; i++)
+    {
+        inventory[i] = 0;
+    }
+
+    inventory[3] = 1;
+    inventory[4] = 2;
+    inventory[12] = 3;
+    set_mouse_sprite(NULL);
+
+    int active = 0;
+
+    do
+    {
+        k = getkey();
+        switch (k)
+        {
+        case KEY_ESC:
+            return 0;
+        default:
+            break;
+        };
+
+        if ((mouse_b & 1) && !active)
+        {
+            active = 1;
+            int invposx = mouse_x / 18;
+            int invposy = mouse_y / 18;
+
+            if (inventory[invposx + invposy * 8] != 0 && held_item == 0)
+            {
+                held_item = inventory[invposx + invposy * 8];
+                inventory[invposx + invposy * 8] = 0;
+                play_sample(snd_take_item, 255, 128, 1000, 0);
+            }
+            else if (inventory[invposx + invposy * 8] == 0 && held_item != 0)
+            {
+                inventory[invposx + invposy * 8] = held_item;
+                held_item = 0;
+                play_sample(snd_drop_item, 255, 128, 1000, 0);
+            }
+
+            if (held_item != 0)
+            {
+                set_mouse_sprite(item_sprites[held_item - 1]);
+            }
+            else
+            {
+                set_mouse_sprite(NULL);
+            }
+        }
+
+        if (!mouse_b & 1)
+        {
+            active = 0;
+        }
+
+        clear_to_color(activepage, makecol(0, 0, 0));
+
+        // Draw inventory slots
+        for (int x = 0; x < 8; x++)
+        {
+            for (int y = 0; y < 2; y++)
+            {
+                // rect(activepage, x * 18, y * 18, (x + 1) * 18 - 1, (y + 1) * 18 - 1, makecol(64, 64, 128));
+                blit(testimage, activepage, 0, 0, x * 18, y * 18, 18, 18);
+                if (inventory[x + y * 8] > 0)
+                {
+                    int spr = inventory[x + y * 8];
+                    masked_blit(item_sprites[spr - 1], activepage, 0, 0, x * 18 + 1, y * 18 + 1, 16, 16);
+                }
+            }
+        }
+
+        // rect(activepage, invposx * 18, invposy * 18, (invposx + 1) * 18 - 1, (invposy + 1) * 18 - 1, makecol(255, 255, 255));
+
+        show_video_bitmap(activepage);
+        show_mouse(activepage);
+
+        if (activepage == page1)
+        {
+            activepage = page2;
+        }
+        else
+        {
+            activepage = page1;
+        }
+
+    } while (1);
+
+    return 0;
+}
+
 int main(int argc, const char **argv)
 {
     if (allegro_init() != 0)
@@ -491,6 +639,7 @@ int main(int argc, const char **argv)
     set_gfx_mode(GFX_TEXT, 0, 0, 0, 0);
     printf("1) Run game\n");
     printf("2) Music test\n");
+    printf("3) Inventory simulation\n");
 
     clear_keybuf();
     while (!keypressed())
@@ -504,6 +653,10 @@ int main(int argc, const char **argv)
     if (key[KEY_2])
     {
         musictest();
+    }
+    if (key[KEY_3])
+    {
+        inventorytest();
     }
 }
 
