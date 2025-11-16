@@ -556,26 +556,30 @@ int inventorytest()
             int invposx = mouse_x / 18;
             int invposy = mouse_y / 18;
 
-            if (inventory[invposx + invposy * 8] != 0 && held_item == 0)
+            if (invposx < 8 && invposy < 2)
             {
-                held_item = inventory[invposx + invposy * 8];
-                inventory[invposx + invposy * 8] = 0;
-                play_sample(snd_take_item, 255, 128, 1000, 0);
-            }
-            else if (inventory[invposx + invposy * 8] == 0 && held_item != 0)
-            {
-                inventory[invposx + invposy * 8] = held_item;
-                held_item = 0;
-                play_sample(snd_drop_item, 255, 128, 1000, 0);
-            }
 
-            if (held_item != 0)
-            {
-                set_mouse_sprite(item_sprites[held_item - 1]);
-            }
-            else
-            {
-                set_mouse_sprite(NULL);
+                if (inventory[invposx + invposy * 8] != 0 && held_item == 0)
+                {
+                    held_item = inventory[invposx + invposy * 8];
+                    inventory[invposx + invposy * 8] = 0;
+                    play_sample(snd_take_item, 255, 128, 1000, 0);
+                }
+                else if (inventory[invposx + invposy * 8] == 0 && held_item != 0)
+                {
+                    inventory[invposx + invposy * 8] = held_item;
+                    held_item = 0;
+                    play_sample(snd_drop_item, 255, 128, 1000, 0);
+                }
+
+                if (held_item != 0)
+                {
+                    set_mouse_sprite(item_sprites[held_item - 1]);
+                }
+                else
+                {
+                    set_mouse_sprite(NULL);
+                }
             }
         }
 
