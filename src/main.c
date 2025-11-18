@@ -10,6 +10,7 @@
 #include "render.h"
 #include "utils.h"
 #include "enemy.h"
+#include "item.h"
 
 #define MAX_SQUADS 4
 
@@ -19,7 +20,7 @@ int gameloop()
     int posy = 8;
     int dirp = F_SOUTH;
     int triggers = 0;
-    struct maptile *map = allocate_map();
+    maptile *map = allocate_map();
     srand(0);
 
     for (int xp = 0; xp < 40; xp++)
@@ -469,6 +470,7 @@ int musictest()
             play_midi(song, 1);
         }
 
+        clear_keybuf();
     } while (!key[KEY_ESC]);
 }
 
@@ -508,7 +510,7 @@ int inventorytest()
     // BITMAP *testimage = load_tga("testart.tga", 0);
     BITMAP *testimage = load_tga("testart.tga", palette);
 
-    BITMAP *item_sprites[3];
+    BITMAP *item_sprites[5];
 
     item_sprites[0] = create_bitmap(16, 16);
     blit(testimage, item_sprites[0], 32, 0, 0, 0, 16, 16);
@@ -516,10 +518,14 @@ int inventorytest()
     blit(testimage, item_sprites[1], 48, 0, 0, 0, 16, 16);
     item_sprites[2] = create_bitmap(16, 16);
     blit(testimage, item_sprites[2], 64, 0, 0, 0, 16, 16);
+    item_sprites[3] = create_bitmap(16, 16);
+    blit(testimage, item_sprites[3], 80, 0, 0, 0, 16, 16);
+    item_sprites[4] = create_bitmap(16, 16);
+    blit(testimage, item_sprites[4], 96, 0, 0, 0, 16, 16);
 
     set_palette(palette);
 
-    SAMPLE *snd_take_item = load_wav("snd_tak2.wav");
+    SAMPLE *snd_take_item = load_wav("snd_take.wav");
     SAMPLE *snd_drop_item = load_wav("snd_drop.wav");
 
     int wait = 0;
@@ -534,7 +540,10 @@ int inventorytest()
 
     inventory[3] = 1;
     inventory[4] = 2;
+    inventory[5] = 5;
     inventory[12] = 3;
+    inventory[13] = 4;
+
     set_mouse_sprite(NULL);
 
     int active = 0;
@@ -558,7 +567,6 @@ int inventorytest()
 
             if (invposx < 8 && invposy < 2)
             {
-
                 if (inventory[invposx + invposy * 8] != 0 && held_item == 0)
                 {
                     held_item = inventory[invposx + invposy * 8];
@@ -570,6 +578,13 @@ int inventorytest()
                     inventory[invposx + invposy * 8] = held_item;
                     held_item = 0;
                     play_sample(snd_drop_item, 255, 128, 1000, 0);
+                }
+                else if (inventory[invposx + invposy * 8] != 0 && held_item != 0)
+                {
+                    int tmp = inventory[invposx + invposy * 8];
+                    inventory[invposx + invposy * 8] = held_item;
+                    held_item = tmp;
+                    play_sample(snd_take_item, 255, 128, 1000, 0);
                 }
 
                 if (held_item != 0)
@@ -607,6 +622,13 @@ int inventorytest()
 
         // rect(activepage, invposx * 18, invposy * 18, (invposx + 1) * 18 - 1, (invposy + 1) * 18 - 1, makecol(255, 255, 255));
 
+        if (held_item != 0)
+        {
+            textprintf_centre_ex(activepage, font, SCREEN_W / 2, 180,
+                                 makecol(0, 100, 243), -1,
+                                 "%s",
+                                 repository[held_item - 1].name);
+        }
         show_video_bitmap(activepage);
         show_mouse(activepage);
 
@@ -621,6 +643,302 @@ int inventorytest()
 
     } while (1);
 
+    return 0;
+}
+
+int rendertest()
+{
+    maptile *map = allocate_map();
+    maptile *selected_tile = 0;
+
+    map[1].u_passable = 1;
+    map[2].u_block_vision = 1;
+    map[3].d_block_vision = 1;
+    map[41].d_passable = 1;
+    map[41].l_passable = 1;
+    map[41].r_passable = 1;
+    map[41].l_tile = 2;
+    map[41].r_tile = 6;
+    map[81].u_passable = 1;
+
+    if (set_gfx_mode(GFX_AUTODETECT, 320, 200, 0, 400) != 0)
+    {
+        if (set_gfx_mode(GFX_AUTODETECT, 320, 200, 0, 0) != 0)
+        {
+            if (set_gfx_mode(GFX_SAFE, 320, 200, 0, 0) != 0)
+            {
+                set_gfx_mode(GFX_TEXT, 0, 0, 0, 0);
+                allegro_message("Unable to set any graphic mode\n%s\n", allegro_error);
+                return 1;
+            }
+        }
+    }
+
+    BITMAP *page1;
+    BITMAP *page2;
+
+    page1 = create_video_bitmap(320, 200);
+    page2 = create_video_bitmap(320, 200);
+
+    if ((!page1) || (!page2))
+    {
+        set_gfx_mode(GFX_TEXT, 0, 0, 0, 0);
+        allegro_message("Unable to create two video memory pages\n");
+        return 1;
+    }
+
+    install_mouse();
+
+    BITMAP *activepage = page1;
+    PALETTE palette;
+
+    // BITMAP *testimage = load_tga("testart.tga", 0);
+    BITMAP *testimage = load_tga("testart.tga", palette);
+
+    set_palette(palette);
+
+    int wait = 0;
+    int k = 0;
+
+    int active = 0;
+    int mode = 0; // SOLID, BLOCKS VISION, TILESET
+
+    int sliceposa[] = {0, 8, 20};
+    int sliceposb[] = {7, 19, 27};
+
+    do
+    {
+        k = getkey();
+        switch (k)
+        {
+        case KEY_Q:
+            mode = 0;
+            break;
+        case KEY_W:
+            mode = 1;
+            break;
+        case KEY_E:
+            mode = 2;
+            break;
+        case KEY_ESC:
+            return 0;
+        default:
+            break;
+        };
+
+        int blockposx = (mouse_x - 180) / 28;
+        int blockposy = (mouse_y - 4) / 28;
+        int posx = (mouse_x - 180) % 28;
+        int posy = (mouse_y - 4) % 28;
+
+        int slicex = 0;
+        int slicey = 0;
+
+        if (posx < 8)
+        {
+            slicex = 0;
+        }
+        else if (posx >= 20)
+        {
+            slicex = 2;
+        }
+        else
+        {
+            slicex = 1;
+        }
+
+        if (posy < 8)
+        {
+            slicey = 0;
+        }
+        else if (posy >= 20)
+        {
+            slicey = 2;
+        }
+        else
+        {
+            slicey = 1;
+        }
+
+        if ((mouse_b & 1) && !active)
+        {
+            active = 1;
+        }
+
+        if (!mouse_b & 1)
+        {
+            active = 0;
+        }
+
+        clear_to_color(activepage, makecol(0, 0, 0));
+
+        rect(activepage, 3, 3, 3 + 176, 3 + 120, makecol(255, 255, 255));
+
+        for (int y = 0; y < 4; y++)
+        {
+            for (int x = 0; x < 5; x++)
+            {
+                rect(activepage,
+                     180 + x * 28,
+                     4 + y * 28,
+                     180 + x * 28 + 27,
+                     4 + y * 28 + 27, makecol(180, 180, 180));
+
+                if (map[y * 40 + x].u_passable)
+                {
+                    rectfill(activepage,
+                             180 + x * 28 + 8,
+                             4 + y * 28,
+                             180 + x * 28 + 19,
+                             4 + y * 28 + 7, makecol(255, 255, 255));
+                }
+            }
+        }
+
+        if (blockposx >= 0 && blockposy >= 0)
+        {
+            rect(activepage,
+                 180 + blockposx * 28,
+                 4 + blockposy * 28,
+                 180 + blockposx * 28 + 27,
+                 4 + blockposy * 28 + 27, makecol(0, 0, 255));
+
+            rect(activepage,
+                 180 + blockposx * 28 + sliceposa[slicex],
+                 4 + blockposy * 28 + sliceposa[slicey],
+                 180 + blockposx * 28 + sliceposb[slicex],
+                 4 + blockposy * 28 + sliceposb[slicey], makecol(128, 128, 255));
+
+            selected_tile = &map[blockposx + blockposy * 40];
+        }
+
+        if (selected_tile != 0)
+        {
+            textprintf_ex(activepage, font, 2, 128,
+                          makecol(0, 100, 243), -1,
+                          "S",
+                          0);
+
+            if (selected_tile->u_passable)
+            {
+                textprintf_ex(activepage, font, 2, 140,
+                              makecol(0, 100, 243), -1,
+                              "u",
+                              0);
+            }
+
+            if (selected_tile->d_passable)
+            {
+                textprintf_ex(activepage, font, 2, 140 + 16,
+                              makecol(0, 100, 243), -1,
+                              "d",
+                              0);
+            }
+
+            if (selected_tile->l_passable)
+            {
+                textprintf_ex(activepage, font, 2, 140 + 32,
+                              makecol(0, 100, 243), -1,
+                              "l",
+                              0);
+            }
+
+            if (selected_tile->r_passable)
+            {
+                textprintf_ex(activepage, font, 2, 140 + 48,
+                              makecol(0, 100, 243), -1,
+                              "r",
+                              0);
+            }
+
+            textprintf_ex(activepage, font, 32, 128,
+                          makecol(0, 132, 243), -1,
+                          "BV",
+                          0);
+
+            if (selected_tile->u_block_vision)
+            {
+                textprintf_ex(activepage, font, 32, 140,
+                              makecol(0, 132, 243), -1,
+                              "u",
+                              0);
+            }
+
+            if (selected_tile->d_block_vision)
+            {
+                textprintf_ex(activepage, font, 32, 140 + 16,
+                              makecol(0, 132, 243), -1,
+                              "d",
+                              0);
+            }
+
+            if (selected_tile->l_block_vision)
+            {
+                textprintf_ex(activepage, font, 32, 140 + 32,
+                              makecol(0, 132, 243), -1,
+                              "l",
+                              0);
+            }
+
+            if (selected_tile->r_block_vision)
+            {
+                textprintf_ex(activepage, font, 32, 140 + 48,
+                              makecol(0, 132, 243), -1,
+                              "r",
+                              0);
+            }
+
+            textprintf_ex(activepage, font, 62, 128,
+                          makecol(0, 132, 243), -1,
+                          "ID",
+                          0);
+
+            if (selected_tile->u_tile)
+            {
+                textprintf_ex(activepage, font, 62, 140,
+                              makecol(0, 132, 243), -1,
+                              "%d",
+                              selected_tile->u_tile);
+            }
+
+            if (selected_tile->d_tile)
+            {
+                textprintf_ex(activepage, font, 62, 140 + 16,
+                              makecol(0, 132, 243), -1,
+                              "%d",
+                              selected_tile->d_tile);
+            }
+
+            if (selected_tile->l_tile)
+            {
+                textprintf_ex(activepage, font, 62, 140 + 32,
+                              makecol(0, 132, 243), -1,
+                              "%d",
+                              selected_tile->l_tile);
+            }
+
+            if (selected_tile->r_tile)
+            {
+                textprintf_ex(activepage, font, 62, 140 + 48,
+                              makecol(0, 132, 243), -1,
+                              "%d",
+                              selected_tile->r_tile);
+            }
+        }
+
+        show_video_bitmap(activepage);
+        show_mouse(activepage);
+
+        if (activepage == page1)
+        {
+            activepage = page2;
+        }
+        else
+        {
+            activepage = page1;
+        }
+
+    } while (1);
     return 0;
 }
 
@@ -644,6 +962,7 @@ int main(int argc, const char **argv)
     printf("1) Run game\n");
     printf("2) Music test\n");
     printf("3) Inventory simulation\n");
+    printf("4) Rendering Test\n");
 
     clear_keybuf();
     while (!keypressed())
@@ -661,6 +980,10 @@ int main(int argc, const char **argv)
     if (key[KEY_3])
     {
         inventorytest();
+    }
+    if (key[KEY_4])
+    {
+        rendertest();
     }
 }
 

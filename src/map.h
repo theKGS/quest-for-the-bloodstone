@@ -1,6 +1,8 @@
 #ifndef MAP_H
 #define MAP_H
 
+#include <stdlib.h>
+
 #define F_NORTH 0
 #define F_SOUTH 1
 #define F_EAST 2
@@ -9,25 +11,31 @@
 extern int player_x;
 extern int player_y;
 extern int player_facing;
-//extern struct maptile *map_data;
+// extern struct maptile *map_data;
 
-struct maptile
+typedef struct
 {
     // Tile ID per wall. Up, down, left, right
-    int u_tile;
-    int d_tile;
-    int l_tile;
-    int r_tile;
+    char u_tile;
+    char d_tile;
+    char l_tile;
+    char r_tile;
     // Whether or not it is possible to leave the tile through this wall
-    int u_passable;
-    int d_passable;
-    int l_passable;
-    int r_passable;
-    int solid;
-};
+    char u_passable;
+    char d_passable;
+    char l_passable;
+    char r_passable;
 
-struct maptile *allocate_map();
-int issolid(struct maptile *map, int x, int y);
-int check_if_clear_and_solid(struct maptile *map, int px, int py, int dirp, int lr1, int fb1, int lr2, int fb2);
+    char u_block_vision;
+    char d_block_vision;
+    char l_block_vision;
+    char r_block_vision;
+
+    char solid;
+} maptile;
+
+maptile *allocate_map();
+int issolid(maptile *map, int x, int y);
+int check_if_clear_and_solid(maptile *map, int px, int py, int dirp, int lr1, int fb1, int lr2, int fb2);
 
 #endif
