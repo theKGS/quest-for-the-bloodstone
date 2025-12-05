@@ -1,6 +1,6 @@
 #include "item.h"
 
-item repository[] = {
+item_info repository[] = {
     {.name = "Girards' Elixir of Spelling",
      .descr = "1",
      .sprite = NULL},

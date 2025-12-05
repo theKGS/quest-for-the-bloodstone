@@ -46,10 +46,10 @@ int get_x_move_offset(int facing)
     case F_NORTH:
     case F_SOUTH:
         return 0;
-    case F_EAST:
-        return 1;
-    default:
+    case F_WEST:
         return -1;
+    default:
+        return 1;
     }
 }
 

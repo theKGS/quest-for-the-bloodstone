@@ -1,87 +1,250 @@
+#define DEBUGMODE
+#include <allegro.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include "render.h"
+#include "map.h"
+#include "utils.h"
 
-/*
-        2-----3
-       /     /
-      /     /
-     /     /
-    1-----4
-*/
-
-void drawcube(BITMAP *screen, int x, int z)
+void draw_sprite_element(BITMAP *page, sprite_element *selm)
 {
-    int hp1_x = (x * 16 - 8) * 16;
-    int hp2_x = (x * 16 - 8) * 16;
-    int hp3_x = (x * 16 + 8) * 16;
-    int hp4_x = (x * 16 + 8) * 16;
-    int hp5_x = (x * 16 - 8) * 16;
-    int hp6_x = (x * 16 - 8) * 16;
-    int hp7_x = (x * 16 + 8) * 16;
-    int hp8_x = (x * 16 + 8) * 16;
+     draw_sprite(page, selm->bitmap, VIEW_X + selm->x, VIEW_Y + selm->y);
+}
 
-    int hp1_y = 16 * 16;
-    int hp2_y = 16 * 16;
-    int hp3_y = 16 * 16;
-    int hp4_y = 16 * 16;
-    int hp5_y = -16 * 16;
-    int hp6_y = -16 * 16;
-    int hp7_y = -16 * 16;
-    int hp8_y = -16 * 16;
+void draw_sprite_element_f(BITMAP *page, sprite_element *selm)
+{
+     draw_sprite_h_flip(page, selm->bitmap, VIEW_X + 176 - selm->x - selm->bitmap->w, VIEW_Y + selm->y);
+}
 
-    int hp1_z = (z * 16 - 8) * 2;
-    int hp2_z = (z * 16 + 8) * 2;
-    int hp3_z = (z * 16 + 8) * 2;
-    int hp4_z = (z * 16 - 8) * 2;
-    int hp5_z = (z * 16 - 8) * 2;
-    int hp6_z = (z * 16 + 8) * 2;
-    int hp7_z = (z * 16 + 8) * 2;
-    int hp8_z = (z * 16 - 8) * 2;
+void draw_sprite_element_flat(BITMAP *page, sprite_element *s_elm, int i)
+{
+     int vx = s_elm->x + s_elm->bitmap->w * i;
+     int x = VIEW_X + s_elm->x + s_elm->bitmap->w * i;
+     int y = VIEW_Y + s_elm->y;
 
-    line(screen,
-         VIEW_MID_X + (hp1_x / hp1_z), VIEW_MID_Y + (hp1_y / hp1_z),
-         VIEW_MID_X + (hp2_x / hp2_z), VIEW_MID_Y + (hp2_y / hp2_z), 11);
+     if (vx < 0)
+     {
+          blit(s_elm->bitmap, page, -vx, 0, x - vx, y, s_elm->bitmap->w + vx, s_elm->bitmap->h);
+     }
+     else if (s_elm->x + s_elm->bitmap->w * (i + 1) >= VIEW_WIDTH)
+     {
+          blit(s_elm->bitmap, page, 0, 0, x, y, (VIEW_X + VIEW_WIDTH) - x, s_elm->bitmap->h);
+     }
+     else
+     {
+          draw_sprite(page, s_elm->bitmap, x, y);
+     }
+}
 
-    line(screen,
-         VIEW_MID_X + (hp2_x / hp2_z), VIEW_MID_Y + (hp2_y / hp2_z),
-         VIEW_MID_X + (hp3_x / hp3_z), VIEW_MID_Y + (hp3_y / hp3_z), 11);
+void render_view(BITMAP *page, maptile *map, tileset *tilesets, int vx, int vy, int px, int py, int pdir)
+{
+     // L 3
 
-    line(screen,
-         VIEW_MID_X + (hp3_x / hp3_z), VIEW_MID_Y + (hp3_y / hp3_z),
-         VIEW_MID_X + (hp4_x / hp4_z), VIEW_MID_Y + (hp4_y / hp4_z), 11);
+     if (get_tile_wall(map, px, py, pdir, 0, 3, get_prev_facing(pdir)))
+          draw_sprite_element(page, tilesets->side_tile_closest_4);
 
-    line(screen,
-         VIEW_MID_X + (hp4_x / hp4_z), VIEW_MID_Y + (hp4_y / hp4_z),
-         VIEW_MID_X + (hp1_x / hp1_z), VIEW_MID_Y + (hp1_y / hp1_z), 11);
+     if (get_tile_wall(map, px, py, pdir, 0, 3, get_next_facing(pdir)))
+          draw_sprite_element_f(page, tilesets->side_tile_closest_4);
 
-    line(screen,
-         VIEW_MID_X + (hp5_x / hp5_z), VIEW_MID_Y + (hp5_y / hp5_z),
-         VIEW_MID_X + (hp6_x / hp6_z), VIEW_MID_Y + (hp6_y / hp6_z), 12);
+     // L 2
 
-    line(screen,
-         VIEW_MID_X + (hp6_x / hp6_z), VIEW_MID_Y + (hp6_y / hp6_z),
-         VIEW_MID_X + (hp7_x / hp7_z), VIEW_MID_Y + (hp7_y / hp7_z), 12);
+     for (int i = -2; i < 3; i++)
+     {
+          if (get_tile_wall(map, px, py, pdir, i, 2, pdir))
+               draw_sprite_element_flat(page, tilesets->flat_tile_3, i);
+     }
 
-    line(screen,
-         VIEW_MID_X + (hp7_x / hp7_z), VIEW_MID_Y + (hp7_y / hp7_z),
-         VIEW_MID_X + (hp8_x / hp8_z), VIEW_MID_Y + (hp8_y / hp8_z), 12);
+     if (get_tile_wall(map, px, py, pdir, 0, 2, get_prev_facing(pdir)))
+          draw_sprite_element(page, tilesets->side_tile_closest_3);
 
-    line(screen,
-         VIEW_MID_X + (hp8_x / hp8_z), VIEW_MID_Y + (hp8_y / hp8_z),
-         VIEW_MID_X + (hp5_x / hp5_z), VIEW_MID_Y + (hp5_y / hp5_z), 12);
+     if (get_tile_wall(map, px, py, pdir, 0, 2, get_next_facing(pdir)))
+          draw_sprite_element_f(page, tilesets->side_tile_closest_3);
 
-    line(screen,
-         VIEW_MID_X + (hp1_x / hp1_z), VIEW_MID_Y + (hp1_y / hp1_z),
-         VIEW_MID_X + (hp5_x / hp5_z), VIEW_MID_Y + (hp5_y / hp5_z), 10);
+     // Special end pieces one step away
+     if (get_tile_wall(map, px, py, pdir, 0, 1, get_prev_facing(pdir)) == 0 &&
+         get_tile_wall(map, px, py, pdir, 0, 1, pdir) == 0 &&
+         get_tile_wall(map, px, py, pdir, 0, 2, get_prev_facing(pdir)) == 0 &&
+         get_tile_wall(map, px, py, pdir, -1, 1, pdir) != 0)
+     {
+          draw_sprite_element(page, tilesets->end_tile_3);
+     }
 
-    line(screen,
-         VIEW_MID_X + (hp2_x / hp2_z), VIEW_MID_Y + (hp2_y / hp2_z),
-         VIEW_MID_X + (hp6_x / hp6_z), VIEW_MID_Y + (hp6_y / hp6_z), 10);
+     if (get_tile_wall(map, px, py, pdir, 0, 1, get_next_facing(pdir)) == 0 &&
+         get_tile_wall(map, px, py, pdir, 0, 1, pdir) == 0 &&
+         get_tile_wall(map, px, py, pdir, 0, 2, get_next_facing(pdir)) == 0 &&
+         get_tile_wall(map, px, py, pdir, 1, 1, pdir) != 0)
+     {
+          draw_sprite_element_f(page, tilesets->end_tile_3);
+     }
 
-    line(screen,
-         VIEW_MID_X + (hp3_x / hp3_z), VIEW_MID_Y + (hp3_y / hp3_z),
-         VIEW_MID_X + (hp7_x / hp7_z), VIEW_MID_Y + (hp7_y / hp7_z), 10);
+     if (get_tile_wall(map, px, py, pdir, 0, 1, get_prev_facing(pdir)) == 0 &&
+         get_tile_wall(map, px, py, pdir, 0, 1, pdir) == 0 &&
+         get_tile_wall(map, px, py, pdir, 0, 2, get_prev_facing(pdir)) != 0 &&
+         get_tile_wall(map, px, py, pdir, -1, 1, pdir) == 0)
+     {
+          draw_sprite_element(page, tilesets->end_tile_4);
+     }
 
-    line(screen,
-         VIEW_MID_X + (hp4_x / hp4_z), VIEW_MID_Y + (hp4_y / hp4_z),
-         VIEW_MID_X + (hp8_x / hp8_z), VIEW_MID_Y + (hp8_y / hp8_z), 10);
+     if (get_tile_wall(map, px, py, pdir, 0, 1, get_next_facing(pdir)) == 0 &&
+         get_tile_wall(map, px, py, pdir, 0, 1, pdir) == 0 &&
+         get_tile_wall(map, px, py, pdir, 0, 2, get_next_facing(pdir)) != 0 &&
+         get_tile_wall(map, px, py, pdir, 1, 1, pdir) == 0)
+     {
+          draw_sprite_element_f(page, tilesets->end_tile_4);
+     }
+
+     // L 1
+     for (int i = -1; i < 2; i++)
+     {
+          if (get_tile_wall(map, px, py, pdir, i, 1, pdir))
+               draw_sprite_element_flat(page, tilesets->flat_tile_2, i);
+     }
+
+     if (get_tile_wall(map, px, py, pdir, 0, 1, get_prev_facing(pdir)))
+          draw_sprite_element(page, tilesets->side_tile_closest_2);
+
+     if (get_tile_wall(map, px, py, pdir, 0, 1, get_next_facing(pdir)))
+          draw_sprite_element_f(page, tilesets->side_tile_closest_2);
+
+     // Special end pieces
+     if (get_tile_wall(map, px, py, pdir, 0, 0, get_prev_facing(pdir)) == 0 &&
+         get_tile_wall(map, px, py, pdir, 0, 0, pdir) == 0 &&
+         get_tile_wall(map, px, py, pdir, 0, 1, get_prev_facing(pdir)) == 0 &&
+         get_tile_wall(map, px, py, pdir, -1, 0, pdir) != 0)
+     {
+          draw_sprite_element(page, tilesets->end_tile_1);
+     }
+
+     if (get_tile_wall(map, px, py, pdir, 0, 0, get_next_facing(pdir)) == 0 &&
+         get_tile_wall(map, px, py, pdir, 0, 0, pdir) == 0 &&
+         get_tile_wall(map, px, py, pdir, 0, 1, get_next_facing(pdir)) == 0 &&
+         get_tile_wall(map, px, py, pdir, 1, 0, pdir) != 0)
+     {
+          draw_sprite_element_f(page, tilesets->end_tile_1);
+     }
+
+     if (get_tile_wall(map, px, py, pdir, 0, 0, get_prev_facing(pdir)) == 0 &&
+         get_tile_wall(map, px, py, pdir, 0, 0, pdir) == 0 &&
+         get_tile_wall(map, px, py, pdir, 0, 1, get_prev_facing(pdir)) != 0 &&
+         get_tile_wall(map, px, py, pdir, -1, 0, pdir) == 0)
+     {
+          draw_sprite_element(page, tilesets->end_tile_2);
+     }
+
+     if (get_tile_wall(map, px, py, pdir, 0, 0, get_next_facing(pdir)) == 0 &&
+         get_tile_wall(map, px, py, pdir, 0, 0, pdir) == 0 &&
+         get_tile_wall(map, px, py, pdir, 0, 1, get_next_facing(pdir)) != 0 &&
+         get_tile_wall(map, px, py, pdir, 1, 0, pdir) == 0)
+     {
+          draw_sprite_element_f(page, tilesets->end_tile_2);
+     }
+
+     // L 0
+
+     for (int i = -1; i < 2; i++)
+     {
+          if (get_tile_wall(map, px, py, pdir, i, 0, pdir))
+               draw_sprite_element_flat(page, tilesets->flat_tile_1, i);
+     }
+
+     if (get_tile_wall(map, px, py, pdir, 0, 0, get_prev_facing(pdir)))
+          draw_sprite_element(page, tilesets->side_tile_closest_1);
+
+     if (get_tile_wall(map, px, py, pdir, 0, 0, get_next_facing(pdir)))
+          draw_sprite_element_f(page, tilesets->side_tile_closest_1);
+}
+
+tileset *load_tileset_from_file(char *tst_fname, char *atlas_fname, PALETTE palette)
+{
+     FILE *file = fopen(tst_fname, "r");
+
+     if (!file)
+     {
+          set_gfx_mode(GFX_TEXT, 0, 0, 0, 0);
+          allegro_message("Failed to load tileset definition file %s\n", tst_fname);
+          allegro_exit();
+     }
+
+     tileset *tset = malloc(sizeof(tileset));
+
+     BITMAP *atlas = load_tga(atlas_fname, palette);
+
+     if (!atlas)
+     {
+          set_gfx_mode(GFX_TEXT, 0, 0, 0, 0);
+          allegro_message("Failed to load tileset atlas file %s\n", atlas_fname);
+          allegro_exit();
+     }
+
+     tset->flat_tile_1 = load_sprite_element_from_atlas(atlas, file);
+     tset->flat_tile_2 = load_sprite_element_from_atlas(atlas, file);
+     tset->flat_tile_3 = load_sprite_element_from_atlas(atlas, file);
+     tset->side_tile_closest_1 = load_sprite_element_from_atlas(atlas, file);
+     tset->side_tile_closest_2 = load_sprite_element_from_atlas(atlas, file);
+     tset->side_tile_closest_3 = load_sprite_element_from_atlas(atlas, file);
+     tset->side_tile_closest_4 = load_sprite_element_from_atlas(atlas, file);
+     tset->end_tile_1 = load_sprite_element_from_atlas(atlas, file);
+     tset->end_tile_2 = load_sprite_element_from_atlas(atlas, file);
+     tset->end_tile_3 = load_sprite_element_from_atlas(atlas, file);
+     tset->end_tile_4 = load_sprite_element_from_atlas(atlas, file);
+     destroy_bitmap(atlas);
+     fclose(file);
+     return tset;
+}
+
+sprite_element *load_sprite_element_from_atlas(BITMAP *atlas, FILE *file)
+{
+     char line[10];
+     int posx = 5;
+     int posy = 5;
+     int width = 0;
+     int height = 0;
+     int x = 0;
+     int y = 0;
+
+     fgets(line, 10, file); // Read the first line of of each block and ignore it.
+
+     fgets(line, 10, file);
+     posx = atoi(line);
+     fgets(line, 10, file);
+     posy = atoi(line);
+
+     fgets(line, 10, file);
+     width = atoi(line);
+     fgets(line, 10, file);
+     height = atoi(line);
+
+     fgets(line, 10, file);
+     x = atoi(line);
+     fgets(line, 10, file);
+     y = atoi(line);
+
+     sprite_element *element = malloc(sizeof(sprite_element));
+     element->bitmap = create_bitmap(width, height);
+     blit(atlas, element->bitmap, posx, posy, 0, 0, width, height);
+     element->x = x;
+     element->y = y;
+
+     return element;
+}
+
+void destroy_sprite_element(sprite_element *element)
+{
+     destroy_bitmap(element->bitmap);
+     free(element);
+}
+
+void destroy_tileset(tileset *tset)
+{
+     destroy_sprite_element(tset->flat_tile_1);
+     destroy_sprite_element(tset->flat_tile_2);
+     destroy_sprite_element(tset->flat_tile_3);
+     destroy_sprite_element(tset->side_tile_closest_1);
+     destroy_sprite_element(tset->side_tile_closest_2);
+     destroy_sprite_element(tset->side_tile_closest_3);
+     destroy_sprite_element(tset->side_tile_closest_4);
+     destroy_sprite_element(tset->end_tile_1);
+     destroy_sprite_element(tset->end_tile_2);
+     destroy_sprite_element(tset->end_tile_3);
+     destroy_sprite_element(tset->end_tile_4);
 }

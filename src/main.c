@@ -3,6 +3,7 @@
  * MIT License
  */
 
+#define DEBUGMODE
 #include <allegro.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -11,27 +12,21 @@
 #include "utils.h"
 #include "enemy.h"
 #include "item.h"
-
-#define MAX_SQUADS 4
+#include "state.h"
 
 int gameloop()
 {
-    int posx = 8;
-    int posy = 8;
-    int dirp = F_SOUTH;
+    State *state = malloc(sizeof(State));
+
+    state->dir = F_SOUTH;
+    state->px = 4;
+    state->py = 4;
+
     int triggers = 0;
     maptile *map = allocate_map();
     srand(0);
 
-    for (int xp = 0; xp < 40; xp++)
-    {
-        for (int yp = 0; yp < 40; yp++)
-        {
-            int r = rand() % 100;
-            if (r >= 75)
-                map[yp * 40 + xp].solid = 1;
-        }
-    }
+    randomise_map(map);
 
     if (set_gfx_mode(GFX_AUTODETECT, 320, 200, 0, 400) != 0)
     {
@@ -49,11 +44,13 @@ int gameloop()
     MIDI *music;
     music = load_midi("bsmus02.mid");
 
-    play_midi(music, TRUE);
+    // play_midi(music, TRUE);
 
     PALETTE palette;
     BITMAP *page1;
     BITMAP *page2;
+
+    tileset *tset = load_tileset_from_file("set1.tst", "walls1.tga", palette);
 
     page1 = create_video_bitmap(320, 200);
     page2 = create_video_bitmap(320, 200);
@@ -67,85 +64,12 @@ int gameloop()
 
     BITMAP *activepage = page1;
 
-    BITMAP *walls1;
-    walls1 = load_tga("walls1.tga", palette);
-
-    BITMAP *bottle;
-    bottle = load_tga("i01_bot.tga", 0);
-    int held_item = 0;
-
     SAMPLE *snd_take_item = load_wav("snd_tak2.wav");
-    SAMPLE *snd_drop_item = load_wav("snd_drop.wav");
-
-    BITMAP *flat_1 = create_bitmap(128, 96);
-    BITMAP *flat_1a = create_bitmap(24, 96);
-    BITMAP *flat_1b = create_bitmap(24, 96);
-    BITMAP *flat_2 = create_bitmap(80, 59);
-    BITMAP *flat_3 = create_bitmap(48, 37);
-
-    blit(walls1, flat_1, 0, 0, 0, 0, 128, 96);
-    blit(walls1, flat_1a, 128 - 24, 0, 0, 0, 24, 96);
-    blit(walls1, flat_1b, 0, 0, 0, 0, 24, 96);
-    blit(walls1, flat_2, 128, 0, 0, 0, 80, 59);
-    blit(walls1, flat_3, 128, 59, 0, 0, 48, 37);
-
-    BITMAP *angl_1 = create_bitmap(24, 120);
-    BITMAP *angl_2 = create_bitmap(24, 95);
-    BITMAP *angl_3 = create_bitmap(16, 59);
-    BITMAP *angl_4 = create_bitmap(8, 35);
-
-    blit(walls1, angl_1, 208, 0, 0, 0, 24, 120);
-    blit(walls1, angl_2, 232, 0, 0, 0, 24, 95);
-    blit(walls1, angl_3, 256, 0, 0, 0, 16, 59);
-    blit(walls1, angl_4, 272, 0, 0, 0, 8, 25);
 
     set_palette(palette);
 
-    BITMAP *enemy_one_cultist = load_bitmap("enemy_1.tga", palette);
-
-    struct enemy cultist;
-    struct squad group[MAX_SQUADS];
-
-    for (int i = 0; i < MAX_SQUADS; i++)
-    {
-        group[i].x = 0;
-        group[i].y = 0;
-        for (int p = 0; p < 4; p++)
-        {
-            group[i].units[p] = 0;
-        }
-    }
-
-    group[0].units[0] = &cultist;
-    group[1].units[0] = &cultist;
-    group[2].units[0] = &cultist;
-    group[3].units[0] = &cultist;
-    group[4].units[0] = &cultist;
-    group[5].units[0] = &cultist;
-    group[6].units[0] = &cultist;
-    group[7].units[0] = &cultist;
-
-    cultist.picture = enemy_one_cultist;
-    group[0].x = 0;
-    group[0].y = 2;
-    group[1].x = 3;
-    group[1].y = 3;
-    group[2].x = 4;
-    group[2].y = 4;
-    group[3].x = 5;
-    group[3].y = 5;
-    group[4].x = 6;
-    group[4].y = 6;
-    group[5].x = 7;
-    group[5].y = 7;
-    group[6].x = 8;
-    group[6].y = 8;
-    group[7].x = 9;
-    group[7].y = 9;
-
     int k;
     int wait = 0;
-    int enemy_distance;
 
     do
     {
@@ -154,31 +78,31 @@ int gameloop()
         {
         case KEY_W:
             wait = 1;
-            posx += get_x_move_offset(dirp);
-            posy += get_y_move_offset(dirp);
+            state->px += get_x_move_offset(state->dir);
+            state->py += get_y_move_offset(state->dir);
             break;
         case KEY_S:
             wait = 1;
-            posx -= get_x_move_offset(dirp);
-            posy -= get_y_move_offset(dirp);
+            state->px -= get_x_move_offset(state->dir);
+            state->py -= get_y_move_offset(state->dir);
             break;
         case KEY_Q:
             wait = 1;
-            dirp = get_prev_facing(dirp);
+            state->dir = get_prev_facing(state->dir);
             break;
         case KEY_E:
             wait = 1;
-            dirp = get_next_facing(dirp);
+            state->dir = get_next_facing(state->dir);
             break;
         case KEY_A:
             wait = 1;
-            posx += get_y_move_offset(dirp);
-            posy -= get_x_move_offset(dirp);
+            state->px += get_y_move_offset(state->dir);
+            state->py -= get_x_move_offset(state->dir);
             break;
         case KEY_D:
             wait = 1;
-            posx -= get_y_move_offset(dirp);
-            posy += get_x_move_offset(dirp);
+            state->px -= get_y_move_offset(state->dir);
+            state->py += get_x_move_offset(state->dir);
             break;
         case KEY_ESC:
             return 0;
@@ -192,7 +116,7 @@ int gameloop()
         {
             for (int yp = 0; yp < MAP_SIGHT * 2 + 1; yp++)
             {
-                if (issolid(map, posx + xp - MAP_SIGHT, posy + yp - MAP_SIGHT))
+                if (issolid(map, state->px + xp - MAP_SIGHT, state->py + yp - MAP_SIGHT))
                     rectfill(activepage,
                              xp * MAP_TSIZE,
                              yp * MAP_TSIZE,
@@ -210,197 +134,66 @@ int gameloop()
 
         // Z depth = 0
         rectfill(activepage,
-                 (position_offset_to_x(posx, dirp, -1, 0)) * 4 + 1,
-                 (position_offset_to_y(posy, dirp, -1, 0)) * 4 + 1,
-                 (position_offset_to_x(posx, dirp, -1, 0)) * 4 + 2,
-                 (position_offset_to_y(posy, dirp, -1, 0)) * 4 + 2, 6);
+                 (position_offset_to_x(state->px, state->dir, -1, 0)) * 4 + 1,
+                 (position_offset_to_y(state->py, state->dir, -1, 0)) * 4 + 1,
+                 (position_offset_to_x(state->px, state->dir, -1, 0)) * 4 + 2,
+                 (position_offset_to_y(state->py, state->dir, -1, 0)) * 4 + 2, 6);
 
         rectfill(activepage,
-                 (position_offset_to_x(posx, dirp, 1, 0)) * 4 + 1,
-                 (position_offset_to_y(posy, dirp, 1, 0)) * 4 + 1,
-                 (position_offset_to_x(posx, dirp, 1, 0)) * 4 + 2,
-                 (position_offset_to_y(posy, dirp, 1, 0)) * 4 + 2, 6);
+                 (position_offset_to_x(state->px, state->dir, 1, 0)) * 4 + 1,
+                 (position_offset_to_y(state->py, state->dir, 1, 0)) * 4 + 1,
+                 (position_offset_to_x(state->px, state->dir, 1, 0)) * 4 + 2,
+                 (position_offset_to_y(state->py, state->dir, 1, 0)) * 4 + 2, 6);
 
         // Z depth = 1
         rectfill(activepage,
-                 (position_offset_to_x(posx, dirp, 0, 1)) * 4 + 1,
-                 (position_offset_to_y(posy, dirp, 0, 1)) * 4 + 1,
-                 (position_offset_to_x(posx, dirp, 0, 1)) * 4 + 2,
-                 (position_offset_to_y(posy, dirp, 0, 1)) * 4 + 2, 6);
+                 (position_offset_to_x(state->px, state->dir, 0, 1)) * 4 + 1,
+                 (position_offset_to_y(state->py, state->dir, 0, 1)) * 4 + 1,
+                 (position_offset_to_x(state->px, state->dir, 0, 1)) * 4 + 2,
+                 (position_offset_to_y(state->py, state->dir, 0, 1)) * 4 + 2, 6);
 
         rectfill(activepage,
-                 (position_offset_to_x(posx, dirp, -1, 1)) * 4 + 1,
-                 (position_offset_to_y(posy, dirp, -1, 1)) * 4 + 1,
-                 (position_offset_to_x(posx, dirp, -1, 1)) * 4 + 2,
-                 (position_offset_to_y(posy, dirp, -1, 1)) * 4 + 2, 6);
+                 (position_offset_to_x(state->px, state->dir, -1, 1)) * 4 + 1,
+                 (position_offset_to_y(state->py, state->dir, -1, 1)) * 4 + 1,
+                 (position_offset_to_x(state->px, state->dir, -1, 1)) * 4 + 2,
+                 (position_offset_to_y(state->py, state->dir, -1, 1)) * 4 + 2, 6);
 
         rectfill(activepage,
-                 (position_offset_to_x(posx, dirp, 1, 1)) * 4 + 1,
-                 (position_offset_to_y(posy, dirp, 1, 1)) * 4 + 1,
-                 (position_offset_to_x(posx, dirp, 1, 1)) * 4 + 2,
-                 (position_offset_to_y(posy, dirp, 1, 1)) * 4 + 2, 6);
+                 (position_offset_to_x(state->px, state->dir, 1, 1)) * 4 + 1,
+                 (position_offset_to_y(state->py, state->dir, 1, 1)) * 4 + 1,
+                 (position_offset_to_x(state->px, state->dir, 1, 1)) * 4 + 2,
+                 (position_offset_to_y(state->py, state->dir, 1, 1)) * 4 + 2, 6);
 
         // Z depth = 1
         rectfill(activepage,
-                 (position_offset_to_x(posx, dirp, 0, 2)) * 4 + 1,
-                 (position_offset_to_y(posy, dirp, 0, 2)) * 4 + 1,
-                 (position_offset_to_x(posx, dirp, 0, 2)) * 4 + 2,
-                 (position_offset_to_y(posy, dirp, 0, 2)) * 4 + 2, 6);
+                 (position_offset_to_x(state->px, state->dir, 0, 2)) * 4 + 1,
+                 (position_offset_to_y(state->py, state->dir, 0, 2)) * 4 + 1,
+                 (position_offset_to_x(state->px, state->dir, 0, 2)) * 4 + 2,
+                 (position_offset_to_y(state->py, state->dir, 0, 2)) * 4 + 2, 6);
 
         rectfill(activepage,
-                 (position_offset_to_x(posx, dirp, -1, 2)) * 4 + 1,
-                 (position_offset_to_y(posy, dirp, -1, 2)) * 4 + 1,
-                 (position_offset_to_x(posx, dirp, -1, 2)) * 4 + 2,
-                 (position_offset_to_y(posy, dirp, -1, 2)) * 4 + 2, 6);
+                 (position_offset_to_x(state->px, state->dir, -1, 2)) * 4 + 1,
+                 (position_offset_to_y(state->py, state->dir, -1, 2)) * 4 + 1,
+                 (position_offset_to_x(state->px, state->dir, -1, 2)) * 4 + 2,
+                 (position_offset_to_y(state->py, state->dir, -1, 2)) * 4 + 2, 6);
 
         rectfill(activepage,
-                 (position_offset_to_x(posx, dirp, -2, 2)) * 4 + 1,
-                 (position_offset_to_y(posy, dirp, -2, 2)) * 4 + 1,
-                 (position_offset_to_x(posx, dirp, -2, 2)) * 4 + 2,
-                 (position_offset_to_y(posy, dirp, -2, 2)) * 4 + 2, 6);
+                 (position_offset_to_x(state->px, state->dir, -2, 2)) * 4 + 1,
+                 (position_offset_to_y(state->py, state->dir, -2, 2)) * 4 + 1,
+                 (position_offset_to_x(state->px, state->dir, -2, 2)) * 4 + 2,
+                 (position_offset_to_y(state->py, state->dir, -2, 2)) * 4 + 2, 6);
 
         rectfill(activepage,
-                 (position_offset_to_x(posx, dirp, 1, 2)) * 4 + 1,
-                 (position_offset_to_y(posy, dirp, 1, 2)) * 4 + 1,
-                 (position_offset_to_x(posx, dirp, 1, 2)) * 4 + 2,
-                 (position_offset_to_y(posy, dirp, 1, 2)) * 4 + 2, 6);
+                 (position_offset_to_x(state->px, state->dir, 1, 2)) * 4 + 1,
+                 (position_offset_to_y(state->py, state->dir, 1, 2)) * 4 + 1,
+                 (position_offset_to_x(state->px, state->dir, 1, 2)) * 4 + 2,
+                 (position_offset_to_y(state->py, state->dir, 1, 2)) * 4 + 2, 6);
 
         rectfill(activepage,
-                 (position_offset_to_x(posx, dirp, 2, 2)) * 4 + 1,
-                 (position_offset_to_y(posy, dirp, 2, 2)) * 4 + 1,
-                 (position_offset_to_x(posx, dirp, 2, 2)) * 4 + 2,
-                 (position_offset_to_y(posy, dirp, 2, 2)) * 4 + 2, 6);
-
-        if (check_if_clear_and_solid(map, posx, posy, dirp, 0, 2, 0, 3))
-        {
-            draw_sprite(activepage, flat_3, VIEW_X + 63, VIEW_Y + 26);
-        }
-
-        for (int i = 0; i < MAX_SQUADS; i++)
-        {
-            enemy_distance = depth_position(posx, posy, dirp, group[i].x, group[i].y);
-            if (enemy_distance == 3)
-            {
-                int offset = -32 * depth_position(posx, posy, get_next_facing(dirp), group[i].x, group[i].y);
-                stretch_sprite(activepage, enemy_one_cultist,
-                               VIEW_MID_X - enemy_one_cultist->w / 6 - offset,
-                               VIEW_MID_Y - enemy_one_cultist->h / 6,
-                               enemy_one_cultist->w / 6,
-                               enemy_one_cultist->h / 6);
-            }
-        }
-
-        if (check_if_clear_and_solid(map, posx, posy, dirp, -1, 2, -1, 3))
-        {
-            draw_sprite(activepage, flat_3, VIEW_X + 63 - 48, VIEW_Y + 26);
-        }
-
-        if (check_if_clear_and_solid(map, posx, posy, dirp, -2, 2, -2, 3))
-        {
-            draw_sprite(activepage, flat_3, VIEW_X + 63 - 2 * 48, VIEW_Y + 26);
-        }
-
-        if (check_if_clear_and_solid(map, posx, posy, dirp, 1, 2, 1, 3))
-        {
-            draw_sprite(activepage, flat_3, VIEW_X + 63 + 48, VIEW_Y + 26);
-        }
-
-        if (check_if_clear_and_solid(map, posx, posy, dirp, 2, 2, 2, 3))
-        {
-            draw_sprite(activepage, flat_3, VIEW_X + 63 + 2 * 48, VIEW_Y + 26);
-        }
-
-        // Segments two steps away
-
-        for (int i = 0; i < MAX_SQUADS; i++)
-        {
-            enemy_distance = depth_position(posx, posy, dirp, group[i].x, group[i].y);
-            if (enemy_distance == 2)
-            {
-                int offset = -48 * depth_position(posx, posy, get_next_facing(dirp), group[i].x, group[i].y);
-                stretch_sprite(activepage, enemy_one_cultist,
-                               VIEW_MID_X - enemy_one_cultist->w / 4 - offset,
-                               VIEW_MID_Y - enemy_one_cultist->h / 4,
-                               enemy_one_cultist->w / 2,
-                               enemy_one_cultist->h / 2);
-            }
-        }
-
-        if (check_if_clear_and_solid(map, posx, posy, dirp, 0, 1, 0, 2))
-        {
-            draw_sprite(activepage, flat_2, VIEW_X + 47, VIEW_Y + 19);
-        }
-
-        if (check_if_clear_and_solid(map, posx, posy, dirp, -1, 1, -1, 2))
-        {
-            draw_sprite(activepage, flat_2, VIEW_X + 47 - 80, VIEW_Y + 19);
-        }
-
-        if (check_if_clear_and_solid(map, posx, posy, dirp, 1, 1, 1, 2))
-        {
-            draw_sprite(activepage, flat_2, VIEW_X + 47 + 80, VIEW_Y + 19);
-        }
-
-        if (check_if_clear_and_solid(map, posx, posy, dirp, 0, 2, -1, 2))
-        {
-            draw_sprite(activepage, angl_3, VIEW_X + 47, VIEW_Y + 19);
-        }
-
-        if (check_if_clear_and_solid(map, posx, posy, dirp, 0, 2, 1, 2))
-        {
-            draw_sprite_h_flip(activepage, angl_3, VIEW_X + 176 - 47 - 16, VIEW_Y + 19);
-        }
-
-        //
-
-        if (check_if_clear_and_solid(map, posx, posy, dirp, 0, 0, 0, 1))
-        {
-            masked_blit(flat_1, activepage, 0, 0, VIEW_X + 24, VIEW_Y + 7, 128, 96);
-        }
-
-        if (check_if_clear_and_solid(map, posx, posy, dirp, -1, 0, -1, 1))
-        {
-            masked_blit(flat_1a, activepage, 0, 0, VIEW_X, VIEW_Y + 7, 24, 96);
-        }
-
-        if (check_if_clear_and_solid(map, posx, posy, dirp, 1, 0, 1, 1))
-        {
-            masked_blit(flat_1b, activepage, 0, 0, VIEW_X + 176 - 25, VIEW_Y + 7, 24, 96);
-        }
-
-        //
-        if (check_if_clear_and_solid(map, posx, posy, dirp, 0, 1, -1, 1))
-        {
-            draw_sprite(activepage, angl_2, VIEW_X + 23, VIEW_Y + 8);
-        }
-
-        if (check_if_clear_and_solid(map, posx, posy, dirp, 0, 1, 1, 1))
-        {
-            draw_sprite_h_flip(activepage, angl_2, VIEW_X + 176 - 49, VIEW_Y + 8);
-        }
-
-        //
-
-        if (check_if_clear_and_solid(map, posx, posy, dirp, 0, 0, -1, 0))
-        {
-            draw_sprite(activepage, angl_1, VIEW_X, VIEW_Y);
-        }
-
-        if (check_if_clear_and_solid(map, posx, posy, dirp, 0, 0, 1, 0))
-        {
-            draw_sprite_h_flip(activepage, angl_1, VIEW_X + 176 - 25, VIEW_Y);
-        }
-
-        for (int i = 0; i < MAX_SQUADS; i++)
-        {
-            enemy_distance = depth_position(posx, posy, dirp, group[i].x, group[i].y);
-            if (enemy_distance == 1 && depth_position(posx, posy, get_next_facing(dirp), group[i].x, group[i].y) == 0)
-            {
-                draw_sprite(activepage, enemy_one_cultist,
-                            VIEW_MID_X - enemy_one_cultist->w / 2,
-                            VIEW_MID_Y - enemy_one_cultist->h / 2);
-            }
-        }
+                 (position_offset_to_x(state->px, state->dir, 2, 2)) * 4 + 1,
+                 (position_offset_to_y(state->py, state->dir, 2, 2)) * 4 + 1,
+                 (position_offset_to_x(state->px, state->dir, 2, 2)) * 4 + 2,
+                 (position_offset_to_y(state->py, state->dir, 2, 2)) * 4 + 2, 6);
 
         // Draw viewport frame
         rect(activepage, VIEW_X - 1, VIEW_Y - 1, VIEW_X + 176, VIEW_Y + 120, makecol(255, 0, 0));
@@ -408,8 +201,10 @@ int gameloop()
         if (wait)
         {
             triggers += 1;
-            play_sample(snd_take_item, 255, 128, 1000, 0);
+            // play_sample(snd_take_item, 255, 128, 1000, 0);
         }
+
+        render_view(activepage, map, tset, VIEW_X, VIEW_Y, state->px, state->py, state->dir);
 
         textprintf_centre_ex(activepage, font, SCREEN_W / 2, 180,
                              makecol(0, 100, 243), -1,
@@ -443,6 +238,7 @@ int musictest()
     printf("1) Track 1");
     printf("2) Track 2");
     printf("3) Track 3");
+    printf("4) Track 4");
     MIDI *song;
 
     clear_keybuf();
@@ -470,8 +266,17 @@ int musictest()
             play_midi(song, 1);
         }
 
+        if (key[KEY_4])
+        {
+            song = load_midi("bsmus04.mid");
+            play_midi(song, 1);
+        }
+
+
         clear_keybuf();
     } while (!key[KEY_ESC]);
+
+    return 0;
 }
 
 int inventorytest()
@@ -528,7 +333,6 @@ int inventorytest()
     SAMPLE *snd_take_item = load_wav("snd_take.wav");
     SAMPLE *snd_drop_item = load_wav("snd_drop.wav");
 
-    int wait = 0;
     int k = 0;
 
     int inventory[16];
@@ -651,15 +455,19 @@ int rendertest()
     maptile *map = allocate_map();
     maptile *selected_tile = 0;
 
-    map[1].u_passable = 1;
-    map[2].u_block_vision = 1;
-    map[3].d_block_vision = 1;
-    map[41].d_passable = 1;
-    map[41].l_passable = 1;
-    map[41].r_passable = 1;
-    map[41].l_tile = 2;
-    map[41].r_tile = 6;
-    map[81].u_passable = 1;
+    map[0].tile_wall[F_EAST] = 1;
+    map[1].solid_wall[F_NORTH] = 1;
+    map[2].seethrough_wall[F_NORTH] = 1;
+    map[3].seethrough_wall[F_NORTH] = 1;
+    map[41].solid_wall[F_NORTH] = 1;
+    map[41].solid_wall[F_EAST] = 1;
+    map[41].solid_wall[F_WEST] = 1;
+    map[41].tile_wall[F_SOUTH] = 2;
+    map[41].tile_wall[F_SOUTH] = 6;
+    map[81].solid_wall[F_NORTH] = 1;
+    map[40 * 2 + 3].tile_wall[F_NORTH] = 1;
+    map[40 * 2 + 4].tile_wall[F_SOUTH] = 1;
+    map[40 * 1 + 2].tile_wall[F_EAST] = 1;
 
     if (set_gfx_mode(GFX_AUTODETECT, 320, 200, 0, 400) != 0)
     {
@@ -692,12 +500,17 @@ int rendertest()
     BITMAP *activepage = page1;
     PALETTE palette;
 
-    // BITMAP *testimage = load_tga("testart.tga", 0);
-    BITMAP *testimage = load_tga("testart.tga", palette);
+    tileset *tset = load_tileset_from_file("set1.tst", "walls1.tga", palette);
+
+    if (!tset->flat_tile_1->bitmap)
+    {
+        set_gfx_mode(GFX_TEXT, 0, 0, 0, 0);
+        allegro_message("Failed to load image\n");
+        return 1;
+    }
 
     set_palette(palette);
 
-    int wait = 0;
     int k = 0;
 
     int active = 0;
@@ -705,6 +518,10 @@ int rendertest()
 
     int sliceposa[] = {0, 8, 20};
     int sliceposb[] = {7, 19, 27};
+
+    int px = 3;
+    int py = 3;
+    int pdir = F_NORTH;
 
     do
     {
@@ -762,6 +579,27 @@ int rendertest()
 
         if ((mouse_b & 1) && !active)
         {
+            selected_tile = &map[blockposx + blockposy * 40];
+            if (mode == 0)
+            {
+                if (posy < 8 && posx > 7 && posx < 20)
+                {
+                    selected_tile->tile_wall[F_NORTH] = !selected_tile->tile_wall[F_NORTH];
+                }
+                else if (posy > 19 && posx > 7 && posx < 20)
+                {
+                    selected_tile->tile_wall[F_SOUTH] = !selected_tile->tile_wall[F_SOUTH];
+                }
+                else if (posx < 8 && posy > 7 && posy < 20)
+                {
+                    selected_tile->tile_wall[F_WEST] = !selected_tile->tile_wall[F_WEST];
+                }
+                else if (posx > 19 && posy > 7 && posy < 20)
+                {
+                    selected_tile->tile_wall[F_EAST] = !selected_tile->tile_wall[F_EAST];
+                }
+            }
+
             active = 1;
         }
 
@@ -772,7 +610,10 @@ int rendertest()
 
         clear_to_color(activepage, makecol(0, 0, 0));
 
-        rect(activepage, 3, 3, 3 + 176, 3 + 120, makecol(255, 255, 255));
+        char wshow[23];
+        char whidden[23];
+
+        render_view(activepage, map, tset, VIEW_X, VIEW_Y, px, py, pdir);
 
         for (int y = 0; y < 4; y++)
         {
@@ -784,13 +625,16 @@ int rendertest()
                      180 + x * 28 + 27,
                      4 + y * 28 + 27, makecol(180, 180, 180));
 
-                if (map[y * 40 + x].u_passable)
+                for (int d = 0; d < 4; d++)
                 {
-                    rectfill(activepage,
-                             180 + x * 28 + 8,
-                             4 + y * 28,
-                             180 + x * 28 + 19,
-                             4 + y * 28 + 7, makecol(255, 255, 255));
+                    if (map[y * 40 + x].tile_wall[d])
+                    {
+                        rectfill(activepage,
+                                 180 + x * 28 + 10 + get_x_move_offset(d) * 10,
+                                 4 + y * 28 + 10 + get_y_move_offset(d) * 10,
+                                 180 + x * 28 + 10 + get_x_move_offset(d) * 10 + 7,
+                                 4 + y * 28 + 10 + get_y_move_offset(d) * 10 + 7, makecol(255, 255, 255));
+                    }
                 }
             }
         }
@@ -812,120 +656,113 @@ int rendertest()
             selected_tile = &map[blockposx + blockposy * 40];
         }
 
-        if (selected_tile != 0)
-        {
-            textprintf_ex(activepage, font, 2, 128,
-                          makecol(0, 100, 243), -1,
-                          "S",
-                          0);
+        int mode1col = mode == 0 ? makecol(0, 255, 255) : makecol(90, 90, 90);
+        int mode2col = mode == 1 ? makecol(0, 255, 255) : makecol(90, 90, 90);
+        int mode3col = mode == 2 ? makecol(0, 255, 255) : makecol(90, 90, 90);
 
-            if (selected_tile->u_passable)
-            {
-                textprintf_ex(activepage, font, 2, 140,
-                              makecol(0, 100, 243), -1,
-                              "u",
-                              0);
-            }
+        /*         if (selected_tile != 0)
+                {
+                    textprintf_ex(activepage, font, 2, 128,
+                                  mode1col, -1,
+                                  "S");
 
-            if (selected_tile->d_passable)
-            {
-                textprintf_ex(activepage, font, 2, 140 + 16,
-                              makecol(0, 100, 243), -1,
-                              "d",
-                              0);
-            }
+                    if (selected_tile->u_solid)
+                    {
+                        textprintf_ex(activepage, font, 2, 140,
+                                      makecol(0, 100, 243), -1,
+                                      "u");
+                    }
 
-            if (selected_tile->l_passable)
-            {
-                textprintf_ex(activepage, font, 2, 140 + 32,
-                              makecol(0, 100, 243), -1,
-                              "l",
-                              0);
-            }
+                    if (selected_tile->d_solid)
+                    {
+                        textprintf_ex(activepage, font, 2, 140 + 16,
+                                      makecol(0, 100, 243), -1,
+                                      "d");
+                    }
 
-            if (selected_tile->r_passable)
-            {
-                textprintf_ex(activepage, font, 2, 140 + 48,
-                              makecol(0, 100, 243), -1,
-                              "r",
-                              0);
-            }
+                    if (selected_tile->l_solid)
+                    {
+                        textprintf_ex(activepage, font, 2, 140 + 32,
+                                      makecol(0, 100, 243), -1,
+                                      "l");
+                    }
 
-            textprintf_ex(activepage, font, 32, 128,
-                          makecol(0, 132, 243), -1,
-                          "BV",
-                          0);
+                    if (selected_tile->r_solid)
+                    {
+                        textprintf_ex(activepage, font, 2, 140 + 48,
+                                      makecol(0, 100, 243), -1,
+                                      "r");
+                    }
 
-            if (selected_tile->u_block_vision)
-            {
-                textprintf_ex(activepage, font, 32, 140,
-                              makecol(0, 132, 243), -1,
-                              "u",
-                              0);
-            }
+                    textprintf_ex(activepage, font, 32, 128,
+                                  mode2col, -1,
+                                  "BV");
 
-            if (selected_tile->d_block_vision)
-            {
-                textprintf_ex(activepage, font, 32, 140 + 16,
-                              makecol(0, 132, 243), -1,
-                              "d",
-                              0);
-            }
+                    if (selected_tile->u_seethrough)
+                    {
+                        textprintf_ex(activepage, font, 32, 140,
+                                      makecol(0, 132, 243), -1,
+                                      "u");
+                    }
 
-            if (selected_tile->l_block_vision)
-            {
-                textprintf_ex(activepage, font, 32, 140 + 32,
-                              makecol(0, 132, 243), -1,
-                              "l",
-                              0);
-            }
+                    if (selected_tile->d_seethrough)
+                    {
+                        textprintf_ex(activepage, font, 32, 140 + 16,
+                                      makecol(0, 132, 243), -1,
+                                      "d");
+                    }
 
-            if (selected_tile->r_block_vision)
-            {
-                textprintf_ex(activepage, font, 32, 140 + 48,
-                              makecol(0, 132, 243), -1,
-                              "r",
-                              0);
-            }
+                    if (selected_tile->l_seethrough)
+                    {
+                        textprintf_ex(activepage, font, 32, 140 + 32,
+                                      makecol(0, 132, 243), -1,
+                                      "l");
+                    }
 
-            textprintf_ex(activepage, font, 62, 128,
-                          makecol(0, 132, 243), -1,
-                          "ID",
-                          0);
+                    if (selected_tile->r_seethrough)
+                    {
+                        textprintf_ex(activepage, font, 32, 140 + 48,
+                                      makecol(0, 132, 243), -1,
+                                      "r");
+                    }
 
-            if (selected_tile->u_tile)
-            {
-                textprintf_ex(activepage, font, 62, 140,
-                              makecol(0, 132, 243), -1,
-                              "%d",
-                              selected_tile->u_tile);
-            }
+                    textprintf_ex(activepage, font, 62, 128,
+                                  mode3col, -1,
+                                  "ID");
 
-            if (selected_tile->d_tile)
-            {
-                textprintf_ex(activepage, font, 62, 140 + 16,
-                              makecol(0, 132, 243), -1,
-                              "%d",
-                              selected_tile->d_tile);
-            }
+                    if (selected_tile->u_tile)
+                    {
+                        textprintf_ex(activepage, font, 62, 140,
+                                      makecol(0, 132, 243), -1,
+                                      "%d",
+                                      selected_tile->u_tile);
+                    }
 
-            if (selected_tile->l_tile)
-            {
-                textprintf_ex(activepage, font, 62, 140 + 32,
-                              makecol(0, 132, 243), -1,
-                              "%d",
-                              selected_tile->l_tile);
-            }
+                    if (selected_tile->d_tile)
+                    {
+                        textprintf_ex(activepage, font, 62, 140 + 16,
+                                      makecol(0, 132, 243), -1,
+                                      "%d",
+                                      selected_tile->d_tile);
+                    }
 
-            if (selected_tile->r_tile)
-            {
-                textprintf_ex(activepage, font, 62, 140 + 48,
-                              makecol(0, 132, 243), -1,
-                              "%d",
-                              selected_tile->r_tile);
-            }
-        }
+                    if (selected_tile->l_tile)
+                    {
+                        textprintf_ex(activepage, font, 62, 140 + 32,
+                                      makecol(0, 132, 243), -1,
+                                      "%d",
+                                      selected_tile->l_tile);
+                    }
 
+                    if (selected_tile->r_tile)
+                    {
+                        textprintf_ex(activepage, font, 62, 140 + 48,
+                                      makecol(0, 132, 243), -1,
+                                      "%d",
+                                      selected_tile->r_tile);
+                    }
+                }
+         */
         show_video_bitmap(activepage);
         show_mouse(activepage);
 
@@ -940,6 +777,22 @@ int rendertest()
 
     } while (1);
     return 0;
+}
+
+int tileedit()
+{
+    if (set_gfx_mode(GFX_AUTODETECT, 320, 200, 0, 400) != 0)
+    {
+        if (set_gfx_mode(GFX_AUTODETECT, 320, 200, 0, 0) != 0)
+        {
+            if (set_gfx_mode(GFX_SAFE, 320, 200, 0, 0) != 0)
+            {
+                set_gfx_mode(GFX_TEXT, 0, 0, 0, 0);
+                allegro_message("Unable to set any graphic mode\n%s\n", allegro_error);
+                return 1;
+            }
+        }
+    }
 }
 
 int main(int argc, const char **argv)
@@ -984,6 +837,10 @@ int main(int argc, const char **argv)
     if (key[KEY_4])
     {
         rendertest();
+    }
+    if (key[KEY_5])
+    {
+        tileedit();
     }
 }
 

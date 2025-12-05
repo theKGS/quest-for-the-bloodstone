@@ -3,7 +3,7 @@
 
 CC        = $(DJGPP_CC)
 VENDOR    = vendor
-CFLAGS    = -DHAVE_STDBOOL_H=1 -fgnu89-inline -Iallegro-4.2.3.1-xc/include
+CFLAGS    = -DHAVE_STDBOOL_H=1 -Wall -fgnu89-inline -Iallegro-4.2.3.1-xc/include
 LDFLAGS   = -Lallegro-4.2.3.1-xc/lib/djgpp -lalleg
 
 BIN       = main.exe
