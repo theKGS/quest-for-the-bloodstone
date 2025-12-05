@@ -28,7 +28,6 @@ typedef struct
 maptile *allocate_map();
 void randomise_map(maptile *map);
 int issolid(maptile *map, int x, int y);
-int check_if_clear_and_solid(maptile *map, int px, int py, int dirp, int lr1, int fb1, int lr2, int fb2);
 int get_tile_wall(maptile *map, int px, int py, int pdir, int lr, int fb, int direction);
 
 #endif
