@@ -5,7 +5,7 @@ typedef struct
 {
     signed char px;
     signed char py;
-    char dir;
+    unsigned char dir;
 
     int inventory_1[8];
     int inventory_2[8];

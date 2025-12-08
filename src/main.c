@@ -91,31 +91,31 @@ int gameloop()
         {
         case KEY_W:
             wait = 1;
-            state->px += get_x_move_offset(state->dir);
-            state->py += get_y_move_offset(state->dir);
+            state->px += x_move_offset[state->dir];
+            state->py += y_move_offset[state->dir];
             break;
         case KEY_S:
             wait = 1;
-            state->px -= get_x_move_offset(state->dir);
-            state->py -= get_y_move_offset(state->dir);
+            state->px -= x_move_offset[state->dir];
+            state->py -= y_move_offset[state->dir];
             break;
         case KEY_Q:
             wait = 1;
-            state->dir = get_prev_facing(state->dir);
+            state->dir = prev_facing[state->dir];
             break;
         case KEY_E:
             wait = 1;
-            state->dir = get_next_facing(state->dir);
+            state->dir = next_facing[state->dir];
             break;
         case KEY_A:
             wait = 1;
-            state->px += get_y_move_offset(state->dir);
-            state->py -= get_x_move_offset(state->dir);
+            state->px += y_move_offset[state->dir];
+            state->py -= x_move_offset[state->dir];
             break;
         case KEY_D:
             wait = 1;
-            state->px -= get_y_move_offset(state->dir);
-            state->py += get_x_move_offset(state->dir);
+            state->px -= y_move_offset[state->dir];
+            state->py += x_move_offset[state->dir];
             break;
         case KEY_ESC:
             return 0;
