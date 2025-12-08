@@ -36,59 +36,61 @@ void draw_sprite_element_flat(BITMAP *page, sprite_element *s_elm, int i)
      }
 }
 
-void render_view(BITMAP *page, maptile *map, tileset *tilesets, int vx, int vy, int px, int py, int pdir)
+void render_view(BITMAP *page, Map *map, tileset *tilesets, int vx, int vy, int px, int py, int pdir)
 {
+     Maptile *tiles = map->tiles;
+
      // L 3
 
-     if (get_tile_wall(map, px, py, pdir, 0, 3, get_prev_facing(pdir)))
+     if (get_tile_wall(tiles, px, py, pdir, 0, 3, get_prev_facing(pdir)))
           draw_sprite_element(page, tilesets->side_tile_closest_4);
 
-     if (get_tile_wall(map, px, py, pdir, 0, 3, get_next_facing(pdir)))
+     if (get_tile_wall(tiles, px, py, pdir, 0, 3, get_next_facing(pdir)))
           draw_sprite_element_f(page, tilesets->side_tile_closest_4);
 
      // L 2
 
      for (int i = -2; i < 3; i++)
      {
-          if (get_tile_wall(map, px, py, pdir, i, 2, pdir))
+          if (get_tile_wall(tiles, px, py, pdir, i, 2, pdir))
                draw_sprite_element_flat(page, tilesets->flat_tile_3, i);
      }
 
-     if (get_tile_wall(map, px, py, pdir, 0, 2, get_prev_facing(pdir)))
+     if (get_tile_wall(tiles, px, py, pdir, 0, 2, get_prev_facing(pdir)))
           draw_sprite_element(page, tilesets->side_tile_closest_3);
 
-     if (get_tile_wall(map, px, py, pdir, 0, 2, get_next_facing(pdir)))
+     if (get_tile_wall(tiles, px, py, pdir, 0, 2, get_next_facing(pdir)))
           draw_sprite_element_f(page, tilesets->side_tile_closest_3);
 
      // Special end pieces one step away
-     if (get_tile_wall(map, px, py, pdir, 0, 1, get_prev_facing(pdir)) == 0 &&
-         get_tile_wall(map, px, py, pdir, 0, 1, pdir) == 0 &&
-         get_tile_wall(map, px, py, pdir, 0, 2, get_prev_facing(pdir)) == 0 &&
-         get_tile_wall(map, px, py, pdir, -1, 1, pdir) != 0)
+     if (get_tile_wall(tiles, px, py, pdir, 0, 1, get_prev_facing(pdir)) == 0 &&
+         get_tile_wall(tiles, px, py, pdir, 0, 1, pdir) == 0 &&
+         get_tile_wall(tiles, px, py, pdir, 0, 2, get_prev_facing(pdir)) == 0 &&
+         get_tile_wall(tiles, px, py, pdir, -1, 1, pdir) != 0)
      {
           draw_sprite_element(page, tilesets->end_tile_3);
      }
 
-     if (get_tile_wall(map, px, py, pdir, 0, 1, get_next_facing(pdir)) == 0 &&
-         get_tile_wall(map, px, py, pdir, 0, 1, pdir) == 0 &&
-         get_tile_wall(map, px, py, pdir, 0, 2, get_next_facing(pdir)) == 0 &&
-         get_tile_wall(map, px, py, pdir, 1, 1, pdir) != 0)
+     if (get_tile_wall(tiles, px, py, pdir, 0, 1, get_next_facing(pdir)) == 0 &&
+         get_tile_wall(tiles, px, py, pdir, 0, 1, pdir) == 0 &&
+         get_tile_wall(tiles, px, py, pdir, 0, 2, get_next_facing(pdir)) == 0 &&
+         get_tile_wall(tiles, px, py, pdir, 1, 1, pdir) != 0)
      {
           draw_sprite_element_f(page, tilesets->end_tile_3);
      }
 
-     if (get_tile_wall(map, px, py, pdir, 0, 1, get_prev_facing(pdir)) == 0 &&
-         get_tile_wall(map, px, py, pdir, 0, 1, pdir) == 0 &&
-         get_tile_wall(map, px, py, pdir, 0, 2, get_prev_facing(pdir)) != 0 &&
-         get_tile_wall(map, px, py, pdir, -1, 1, pdir) == 0)
+     if (get_tile_wall(tiles, px, py, pdir, 0, 1, get_prev_facing(pdir)) == 0 &&
+         get_tile_wall(tiles, px, py, pdir, 0, 1, pdir) == 0 &&
+         get_tile_wall(tiles, px, py, pdir, 0, 2, get_prev_facing(pdir)) != 0 &&
+         get_tile_wall(tiles, px, py, pdir, -1, 1, pdir) == 0)
      {
           draw_sprite_element(page, tilesets->end_tile_4);
      }
 
-     if (get_tile_wall(map, px, py, pdir, 0, 1, get_next_facing(pdir)) == 0 &&
-         get_tile_wall(map, px, py, pdir, 0, 1, pdir) == 0 &&
-         get_tile_wall(map, px, py, pdir, 0, 2, get_next_facing(pdir)) != 0 &&
-         get_tile_wall(map, px, py, pdir, 1, 1, pdir) == 0)
+     if (get_tile_wall(tiles, px, py, pdir, 0, 1, get_next_facing(pdir)) == 0 &&
+         get_tile_wall(tiles, px, py, pdir, 0, 1, pdir) == 0 &&
+         get_tile_wall(tiles, px, py, pdir, 0, 2, get_next_facing(pdir)) != 0 &&
+         get_tile_wall(tiles, px, py, pdir, 1, 1, pdir) == 0)
      {
           draw_sprite_element_f(page, tilesets->end_tile_4);
      }
@@ -96,45 +98,45 @@ void render_view(BITMAP *page, maptile *map, tileset *tilesets, int vx, int vy, 
      // L 1
      for (int i = -1; i < 2; i++)
      {
-          if (get_tile_wall(map, px, py, pdir, i, 1, pdir))
+          if (get_tile_wall(tiles, px, py, pdir, i, 1, pdir))
                draw_sprite_element_flat(page, tilesets->flat_tile_2, i);
      }
 
-     if (get_tile_wall(map, px, py, pdir, 0, 1, get_prev_facing(pdir)))
+     if (get_tile_wall(tiles, px, py, pdir, 0, 1, get_prev_facing(pdir)))
           draw_sprite_element(page, tilesets->side_tile_closest_2);
 
-     if (get_tile_wall(map, px, py, pdir, 0, 1, get_next_facing(pdir)))
+     if (get_tile_wall(tiles, px, py, pdir, 0, 1, get_next_facing(pdir)))
           draw_sprite_element_f(page, tilesets->side_tile_closest_2);
 
      // Special end pieces
-     if (get_tile_wall(map, px, py, pdir, 0, 0, get_prev_facing(pdir)) == 0 &&
-         get_tile_wall(map, px, py, pdir, 0, 0, pdir) == 0 &&
-         get_tile_wall(map, px, py, pdir, 0, 1, get_prev_facing(pdir)) == 0 &&
-         get_tile_wall(map, px, py, pdir, -1, 0, pdir) != 0)
+     if (get_tile_wall(tiles, px, py, pdir, 0, 0, get_prev_facing(pdir)) == 0 &&
+         get_tile_wall(tiles, px, py, pdir, 0, 0, pdir) == 0 &&
+         get_tile_wall(tiles, px, py, pdir, 0, 1, get_prev_facing(pdir)) == 0 &&
+         get_tile_wall(tiles, px, py, pdir, -1, 0, pdir) != 0)
      {
           draw_sprite_element(page, tilesets->end_tile_1);
      }
 
-     if (get_tile_wall(map, px, py, pdir, 0, 0, get_next_facing(pdir)) == 0 &&
-         get_tile_wall(map, px, py, pdir, 0, 0, pdir) == 0 &&
-         get_tile_wall(map, px, py, pdir, 0, 1, get_next_facing(pdir)) == 0 &&
-         get_tile_wall(map, px, py, pdir, 1, 0, pdir) != 0)
+     if (get_tile_wall(tiles, px, py, pdir, 0, 0, get_next_facing(pdir)) == 0 &&
+         get_tile_wall(tiles, px, py, pdir, 0, 0, pdir) == 0 &&
+         get_tile_wall(tiles, px, py, pdir, 0, 1, get_next_facing(pdir)) == 0 &&
+         get_tile_wall(tiles, px, py, pdir, 1, 0, pdir) != 0)
      {
           draw_sprite_element_f(page, tilesets->end_tile_1);
      }
 
-     if (get_tile_wall(map, px, py, pdir, 0, 0, get_prev_facing(pdir)) == 0 &&
-         get_tile_wall(map, px, py, pdir, 0, 0, pdir) == 0 &&
-         get_tile_wall(map, px, py, pdir, 0, 1, get_prev_facing(pdir)) != 0 &&
-         get_tile_wall(map, px, py, pdir, -1, 0, pdir) == 0)
+     if (get_tile_wall(tiles, px, py, pdir, 0, 0, get_prev_facing(pdir)) == 0 &&
+         get_tile_wall(tiles, px, py, pdir, 0, 0, pdir) == 0 &&
+         get_tile_wall(tiles, px, py, pdir, 0, 1, get_prev_facing(pdir)) != 0 &&
+         get_tile_wall(tiles, px, py, pdir, -1, 0, pdir) == 0)
      {
           draw_sprite_element(page, tilesets->end_tile_2);
      }
 
-     if (get_tile_wall(map, px, py, pdir, 0, 0, get_next_facing(pdir)) == 0 &&
-         get_tile_wall(map, px, py, pdir, 0, 0, pdir) == 0 &&
-         get_tile_wall(map, px, py, pdir, 0, 1, get_next_facing(pdir)) != 0 &&
-         get_tile_wall(map, px, py, pdir, 1, 0, pdir) == 0)
+     if (get_tile_wall(tiles, px, py, pdir, 0, 0, get_next_facing(pdir)) == 0 &&
+         get_tile_wall(tiles, px, py, pdir, 0, 0, pdir) == 0 &&
+         get_tile_wall(tiles, px, py, pdir, 0, 1, get_next_facing(pdir)) != 0 &&
+         get_tile_wall(tiles, px, py, pdir, 1, 0, pdir) == 0)
      {
           draw_sprite_element_f(page, tilesets->end_tile_2);
      }
@@ -143,15 +145,17 @@ void render_view(BITMAP *page, maptile *map, tileset *tilesets, int vx, int vy, 
 
      for (int i = -1; i < 2; i++)
      {
-          if (get_tile_wall(map, px, py, pdir, i, 0, pdir))
+          if (get_tile_wall(tiles, px, py, pdir, i, 0, pdir))
                draw_sprite_element_flat(page, tilesets->flat_tile_1, i);
      }
 
-     if (get_tile_wall(map, px, py, pdir, 0, 0, get_prev_facing(pdir)))
+     if (get_tile_wall(tiles, px, py, pdir, 0, 0, get_prev_facing(pdir)))
           draw_sprite_element(page, tilesets->side_tile_closest_1);
 
-     if (get_tile_wall(map, px, py, pdir, 0, 0, get_next_facing(pdir)))
+     if (get_tile_wall(tiles, px, py, pdir, 0, 0, get_next_facing(pdir)))
           draw_sprite_element_f(page, tilesets->side_tile_closest_1);
+
+     render_items_on_tile(page, tiles[40 * py + px], map->store, pdir);
 }
 
 tileset *load_tileset_from_file(char *tst_fname, char *atlas_fname, PALETTE palette)
@@ -247,4 +251,28 @@ void destroy_tileset(tileset *tset)
      destroy_sprite_element(tset->end_tile_2);
      destroy_sprite_element(tset->end_tile_3);
      destroy_sprite_element(tset->end_tile_4);
+}
+
+void render_items(BITMAP *page, Item_reference item, Item_reference *store, int x, int y)
+{
+     int cur_ref = item.ref;
+     int cur_next = item.next;
+     int offset = 0;
+
+     while (cur_ref)
+     {
+          stretch_sprite(page, repository[cur_ref].sprite, VIEW_X + offset + x, VIEW_Y +y, 16, 16);
+          cur_ref = store[cur_next].ref;
+          cur_next = store[cur_next].next;
+          offset += 4;
+     }
+}
+
+void render_items_on_tile(BITMAP *page, Maptile tile, Item_reference *store, int pdir)
+{
+     unsigned char l[] = {0, 3, 2, 1};
+     unsigned char r[] = {1, 2, 0, 3};
+
+     render_items(page, tile.item_slots[l[pdir]], store, 27, 103);
+     render_items(page, tile.item_slots[r[pdir]], store, 131, 103);
 }

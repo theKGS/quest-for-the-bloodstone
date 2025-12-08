@@ -49,6 +49,12 @@ typedef struct
 sprite_element *load_sprite_element_from_atlas(BITMAP *atlas, FILE *file);
 tileset *load_tileset_from_file(char *tst_fname, char *atlas_fname, PALETTE palette);
 void destroy_sprite_element(sprite_element *element);
-void render_view(BITMAP *page, maptile *map, tileset *tilesets, int vx, int vy, int px, int py, int pdir);
+void destroy_tileset(tileset *tset);
+
+void render_items(BITMAP *page, Item_reference item, Item_reference *store, int pdir, int steps);
+void render_items_on_tile(BITMAP *page, Maptile tile, Item_reference *store, int pdir);
+
+
+void render_view(BITMAP *page, Map *map, tileset *tilesets, int vx, int vy, int px, int py, int pdir);
 
 #endif

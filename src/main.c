@@ -23,10 +23,16 @@ int gameloop()
     state->py = 4;
 
     int triggers = 0;
-    maptile *map = allocate_map();
+    Map *map = allocate_map();
     srand(0);
 
-    randomise_map(map);
+    randomise_map(map->tiles);
+
+    drop_item(&(map->tiles[0].item_slots[0]), map->store, 1, 0);
+    drop_item(&(map->tiles[0].item_slots[0]), map->store, 1, 0);
+    drop_item(&(map->tiles[0].item_slots[2]), map->store, 2, 0);
+    drop_item(&(map->tiles[0].item_slots[2]), map->store, 3, 0);
+    drop_item(&(map->tiles[0].item_slots[2]), map->store, 4, 0);
 
     if (set_gfx_mode(GFX_AUTODETECT, 320, 200, 0, 400) != 0)
     {
@@ -40,6 +46,8 @@ int gameloop()
             }
         }
     }
+
+    load_item_sprites();
 
     MIDI *music;
     music = load_midi("bsmus02.mid");
@@ -116,7 +124,7 @@ int gameloop()
         {
             for (int yp = 0; yp < MAP_SIGHT * 2 + 1; yp++)
             {
-                if (issolid(map, state->px + xp - MAP_SIGHT, state->py + yp - MAP_SIGHT))
+                if (issolid(map->tiles, state->px + xp - MAP_SIGHT, state->py + yp - MAP_SIGHT))
                     rectfill(activepage,
                              xp * MAP_TSIZE,
                              yp * MAP_TSIZE,
@@ -271,7 +279,6 @@ int musictest()
             song = load_midi("bsmus04.mid");
             play_midi(song, 1);
         }
-
 
         clear_keybuf();
     } while (!key[KEY_ESC]);
@@ -450,10 +457,11 @@ int inventorytest()
     return 0;
 }
 
+/*
 int rendertest()
 {
-    maptile *map = allocate_map();
-    maptile *selected_tile = 0;
+    Maptile *map = allocate_map();
+    Maptile *selected_tile = 0;
 
     map[0].tile_wall[F_EAST] = 1;
     map[1].solid_wall[F_NORTH] = 1;
@@ -613,7 +621,7 @@ int rendertest()
         char wshow[23];
         char whidden[23];
 
-        render_view(activepage, map, tset, VIEW_X, VIEW_Y, px, py, pdir);
+        //render_view(activepage, map, tset, VIEW_X, VIEW_Y, px, py, pdir);
 
         for (int y = 0; y < 4; y++)
         {
@@ -660,7 +668,7 @@ int rendertest()
         int mode2col = mode == 1 ? makecol(0, 255, 255) : makecol(90, 90, 90);
         int mode3col = mode == 2 ? makecol(0, 255, 255) : makecol(90, 90, 90);
 
-        /*         if (selected_tile != 0)
+        /        if (selected_tile != 0)
                 {
                     textprintf_ex(activepage, font, 2, 128,
                                   mode1col, -1,
@@ -762,7 +770,7 @@ int rendertest()
                                       selected_tile->r_tile);
                     }
                 }
-         */
+         
         show_video_bitmap(activepage);
         show_mouse(activepage);
 
@@ -777,7 +785,8 @@ int rendertest()
 
     } while (1);
     return 0;
-}
+} 
+*/
 
 int tileedit()
 {
@@ -793,6 +802,8 @@ int tileedit()
             }
         }
     }
+
+    return 0;
 }
 
 int main(int argc, const char **argv)
@@ -836,7 +847,7 @@ int main(int argc, const char **argv)
     }
     if (key[KEY_4])
     {
-        rendertest();
+        //rendertest();
     }
     if (key[KEY_5])
     {
