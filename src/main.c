@@ -128,17 +128,17 @@ int gameloop()
             active = 1;
             if (mouse_x < 160)
             {
-                if (map->tiles[state->py * 40 + state->px].item_slots[slot_index_fl[state->dir]].ref)
+                if (get_tile_from_state(map, state)->item_slots[slot_index_fl[state->dir]].ref)
                 {
                     if (!held_item.ref)
                     {
-                        held_item = map->tiles[state->py * 40 + state->px].item_slots[slot_index_fl[state->dir]];
-                        remove_item(&(map->tiles[state->py * 40 + state->px].item_slots[slot_index_fl[state->dir]]), map->store);
+                        held_item = get_tile_from_state(map, state)->item_slots[slot_index_fl[state->dir]];
+                        remove_item(&(get_tile_from_state(map, state)->item_slots[slot_index_fl[state->dir]]), map->store);
                         set_mouse_sprite(repository[held_item.ref].sprite);
                     }
                     else
                     {
-                        drop_item(&(map->tiles[state->py * 40 + state->px].item_slots[slot_index_fl[state->dir]]),
+                        drop_item(&(get_tile_from_state(map, state)->item_slots[slot_index_fl[state->dir]]),
                                   map->store, held_item.ref, held_item.meta);
                         held_item.ref = 0;
                         held_item.meta = 0;
@@ -149,7 +149,7 @@ int gameloop()
                 {
                     if (held_item.ref)
                     {
-                        drop_item(&(map->tiles[state->py * 40 + state->px].item_slots[slot_index_fl[state->dir]]),
+                        drop_item(&(get_tile_from_state(map, state)->item_slots[slot_index_fl[state->dir]]),
                                   map->store, held_item.ref, held_item.meta);
                         held_item.ref = 0;
                         held_item.meta = 0;
@@ -159,17 +159,17 @@ int gameloop()
             }
             else
             {
-                if (map->tiles[state->py * 40 + state->px].item_slots[slot_index_fr[state->dir]].ref)
+                if (get_tile_from_state(map, state)->item_slots[slot_index_fr[state->dir]].ref)
                 {
                     if (!held_item.ref)
                     {
-                        held_item = map->tiles[state->py * 40 + state->px].item_slots[slot_index_fr[state->dir]];
-                        remove_item(&(map->tiles[state->py * 40 + state->px].item_slots[slot_index_fr[state->dir]]), map->store);
+                        held_item = get_tile_from_state(map, state)->item_slots[slot_index_fr[state->dir]];
+                        remove_item(&(get_tile_from_state(map, state)->item_slots[slot_index_fr[state->dir]]), map->store);
                         set_mouse_sprite(repository[held_item.ref].sprite);
                     }
                     else
                     {
-                        drop_item(&(map->tiles[state->py * 40 + state->px].item_slots[slot_index_fr[state->dir]]),
+                        drop_item(&(get_tile_from_state(map, state)->item_slots[slot_index_fr[state->dir]]),
                                   map->store, held_item.ref, held_item.meta);
                         held_item.ref = 0;
                         held_item.meta = 0;
@@ -180,7 +180,7 @@ int gameloop()
                 {
                     if (held_item.ref)
                     {
-                        drop_item(&(map->tiles[state->py * 40 + state->px].item_slots[slot_index_fr[state->dir]]),
+                        drop_item(&(get_tile_from_state(map, state)->item_slots[slot_index_fr[state->dir]]),
                                   map->store, held_item.ref, held_item.meta);
                         held_item.ref = 0;
                         held_item.meta = 0;

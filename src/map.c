@@ -145,3 +145,11 @@ void remove_item(Item_reference *slot, Item_reference *store)
         store[index] = (Item_reference){0, 0, 0};
     }
 }
+
+Maptile* get_tile_from_state(Map *map, State *s){
+    return &(map->tiles[s->py * 40 + s->px]);
+}
+
+Maptile* get_tile_from_coords(Map *map, int px, int py){
+    return &(map->tiles[py * 40 + px]);
+}

@@ -4,18 +4,18 @@
 
 // lookup tables for slot indices
 // far left, far right, close left, close right
-unsigned char slot_index_fl[4] = {0, 3, 2, 1};
-unsigned char slot_index_fr[4] = {1, 2, 0, 3};
-unsigned char slot_index_cl[4] = {2, 1, 3, 0};
-unsigned char slot_index_cr[4] = {3, 0, 1, 2};
+const unsigned char slot_index_fl[4] = {0, 3, 2, 1};
+const unsigned char slot_index_fr[4] = {1, 2, 0, 3};
+const unsigned char slot_index_cl[4] = {2, 1, 3, 0};
+const unsigned char slot_index_cr[4] = {3, 0, 1, 2};
 
 // lookup tables for finding world coordinates from relative coordinates
-signed char x_move_offset[4] = {0, 0, -1, 1};
-signed char y_move_offset[4] = {-1, 1, 0, 0};
+const signed char x_move_offset[4] = {0, 0, -1, 1};
+const signed char y_move_offset[4] = {-1, 1, 0, 0};
 
 // lookup tables for rotating directions
-unsigned char next_facing[4] = {F_EAST, F_WEST, F_NORTH, F_SOUTH};
-unsigned char prev_facing[4] = {F_WEST, F_EAST, F_SOUTH, F_NORTH};
+const unsigned char next_facing[4] = {F_EAST, F_WEST, F_NORTH, F_SOUTH};
+const unsigned char prev_facing[4] = {F_WEST, F_EAST, F_SOUTH, F_NORTH};
 
 int getkey()
 {

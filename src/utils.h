@@ -1,15 +1,15 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-extern unsigned char slot_index_fl[];
-extern unsigned char slot_index_fr[];
-extern unsigned char slot_index_cl[];
-extern unsigned char slot_index_cr[];
+extern const unsigned char slot_index_fl[];
+extern const unsigned char slot_index_fr[];
+extern const unsigned char slot_index_cl[];
+extern const unsigned char slot_index_cr[];
 
-extern signed char x_move_offset[];
-extern signed char y_move_offset[];
-extern unsigned char next_facing[];
-extern unsigned char prev_facing[];
+extern const signed char x_move_offset[];
+extern const signed char y_move_offset[];
+extern const unsigned char next_facing[];
+extern const unsigned char prev_facing[];
 
 
 

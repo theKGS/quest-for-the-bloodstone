@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include "item.h"
+#include "state.h"
 
 #define F_NORTH 0
 #define F_SOUTH 1
@@ -33,5 +34,8 @@ int issolid(Maptile *map, int x, int y);
 int get_tile_wall(Maptile *map, int px, int py, int pdir, int lr, int fb, int direction);
 void drop_item(Item_reference *slot, Item_reference *store, unsigned char ref, unsigned char meta);
 void remove_item(Item_reference *slot, Item_reference *store);
+Maptile* get_tile_from_state(Map *map, State *s);
+Maptile* get_tile_from_coords(Map *map, int px, int py);
+
 
 #endif
