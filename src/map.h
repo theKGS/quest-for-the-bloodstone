@@ -32,5 +32,6 @@ void randomise_map(Maptile *map);
 int issolid(Maptile *map, int x, int y);
 int get_tile_wall(Maptile *map, int px, int py, int pdir, int lr, int fb, int direction);
 void drop_item(Item_reference *slot, Item_reference *store, unsigned char ref, unsigned char meta);
+void remove_item(Item_reference *slot, Item_reference *store);
 
 #endif

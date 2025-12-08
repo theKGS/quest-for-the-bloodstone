@@ -3,7 +3,7 @@
 #include "utils.h"
 
 /*
-    Allocates space for the map tiles and sets all values to 0.
+    Allocates space for the map tiles
 */
 Maptile *allocate_map_tiles()
 {
@@ -40,6 +40,9 @@ Maptile *allocate_map_tiles()
     return tiles;
 }
 
+/*
+    Allocates a new Map
+*/
 Map *allocate_map()
 {
     Map *map = malloc(sizeof(Map));
@@ -103,16 +106,20 @@ void randomise_map(Maptile *map)
     }
 }
 
+
+/*
+    Add an item to a map slot
+*/
 void drop_item(Item_reference *slot, Item_reference *store, unsigned char ref, unsigned char meta)
 {
     if (slot->ref)
     {
         int free = -1;
-        for (int i = 1; i < 256; i++)
+        for (int index = 1; index < 256; index++)
         {
-            if (store[i].ref == 0)
+            if (store[index].ref == 0)
             {
-                free = i;
+                free = index;
                 break;
             }
         }
@@ -123,5 +130,18 @@ void drop_item(Item_reference *slot, Item_reference *store, unsigned char ref, u
     else
     {
         *slot = (Item_reference){ref, meta, 0};
+    }
+}
+
+/*
+    Remove an item from a map slot
+*/
+void remove_item(Item_reference *slot, Item_reference *store)
+{
+    if (slot->ref)
+    {
+        int index = slot->next;
+        *slot = store[index];
+        store[index] = (Item_reference){0, 0, 0};
     }
 }
