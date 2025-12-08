@@ -52,7 +52,7 @@ void destroy_sprite_element(sprite_element *element);
 void destroy_tileset(tileset *tset);
 
 void render_items(BITMAP *page, Item_reference item, Item_reference *store, int pdir, int steps);
-void render_items_on_tile(BITMAP *page, Maptile tile, Item_reference *store, int pdir);
+void render_items_on_tile_closest(BITMAP *page, Maptile tile, Item_reference *store, int pdir);
 
 
 void render_view(BITMAP *page, Map *map, tileset *tilesets, int vx, int vy, int px, int py, int pdir);

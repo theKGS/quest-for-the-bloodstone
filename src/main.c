@@ -34,6 +34,10 @@ int gameloop()
     drop_item(&(map->tiles[0].item_slots[2]), map->store, 3, 0);
     drop_item(&(map->tiles[0].item_slots[2]), map->store, 4, 0);
 
+    install_mouse();
+
+    Item_reference held_item = (Item_reference){0, 0, 0};
+
     if (set_gfx_mode(GFX_AUTODETECT, 320, 200, 0, 400) != 0)
     {
         if (set_gfx_mode(GFX_AUTODETECT, 320, 200, 0, 0) != 0)
@@ -78,6 +82,7 @@ int gameloop()
 
     int k;
     int wait = 0;
+    int active = 0;
 
     do
     {
@@ -117,6 +122,76 @@ int gameloop()
         default:
             break;
         };
+
+        if ((mouse_b & 1) && !active)
+        {
+            active = 1;
+            if (mouse_x < 160)
+            {
+                if (map->tiles[state->py * 40 + state->px].item_slots[slot_index_fl[state->dir]].ref)
+                {
+                    if (!held_item.ref)
+                    {
+                        held_item = map->tiles[state->py * 40 + state->px].item_slots[slot_index_fl[state->dir]];
+                        remove_item(&(map->tiles[state->py * 40 + state->px].item_slots[slot_index_fl[state->dir]]), map->store);
+                        set_mouse_sprite(repository[held_item.ref].sprite);
+                    }
+                    else
+                    {
+                        drop_item(&(map->tiles[state->py * 40 + state->px].item_slots[slot_index_fl[state->dir]]),
+                                  map->store, held_item.ref, held_item.meta);
+                        held_item.ref = 0;
+                        held_item.meta = 0;
+                        set_mouse_sprite(NULL);
+                    }
+                }
+                else
+                {
+                    if (held_item.ref)
+                    {
+                        drop_item(&(map->tiles[state->py * 40 + state->px].item_slots[slot_index_fl[state->dir]]),
+                                  map->store, held_item.ref, held_item.meta);
+                        held_item.ref = 0;
+                        held_item.meta = 0;
+                        set_mouse_sprite(NULL);
+                    }
+                }
+            }
+            else
+            {
+                if (map->tiles[state->py * 40 + state->px].item_slots[slot_index_fr[state->dir]].ref)
+                {
+                    if (!held_item.ref)
+                    {
+                        held_item = map->tiles[state->py * 40 + state->px].item_slots[slot_index_fr[state->dir]];
+                        remove_item(&(map->tiles[state->py * 40 + state->px].item_slots[slot_index_fr[state->dir]]), map->store);
+                        set_mouse_sprite(repository[held_item.ref].sprite);
+                    }
+                    else
+                    {
+                        drop_item(&(map->tiles[state->py * 40 + state->px].item_slots[slot_index_fr[state->dir]]),
+                                  map->store, held_item.ref, held_item.meta);
+                        held_item.ref = 0;
+                        held_item.meta = 0;
+                        set_mouse_sprite(NULL);
+                    }
+                }
+                else
+                {
+                    if (held_item.ref)
+                    {
+                        drop_item(&(map->tiles[state->py * 40 + state->px].item_slots[slot_index_fr[state->dir]]),
+                                  map->store, held_item.ref, held_item.meta);
+                        held_item.ref = 0;
+                        held_item.meta = 0;
+                        set_mouse_sprite(NULL);
+                    }
+                }
+            }
+        }
+
+        if (!(mouse_b & 1))
+            active = 0;
 
         clear_to_color(activepage, makecol(0, 0, 0));
 
@@ -220,6 +295,7 @@ int gameloop()
                              triggers);
 
         show_video_bitmap(activepage);
+        show_mouse(activepage);
 
         if (activepage == page1)
         {
@@ -770,7 +846,7 @@ int rendertest()
                                       selected_tile->r_tile);
                     }
                 }
-         
+
         show_video_bitmap(activepage);
         show_mouse(activepage);
 
@@ -785,7 +861,7 @@ int rendertest()
 
     } while (1);
     return 0;
-} 
+}
 */
 
 int tileedit()
@@ -847,7 +923,7 @@ int main(int argc, const char **argv)
     }
     if (key[KEY_4])
     {
-        //rendertest();
+        // rendertest();
     }
     if (key[KEY_5])
     {

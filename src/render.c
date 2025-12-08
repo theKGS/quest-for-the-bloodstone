@@ -155,7 +155,7 @@ void render_view(BITMAP *page, Map *map, tileset *tilesets, int vx, int vy, int 
      if (get_tile_wall(tiles, px, py, pdir, 0, 0, get_next_facing(pdir)))
           draw_sprite_element_f(page, tilesets->side_tile_closest_1);
 
-     render_items_on_tile(page, tiles[40 * py + px], map->store, pdir);
+     render_items_on_tile_closest(page, tiles[40 * py + px], map->store, pdir);
 }
 
 tileset *load_tileset_from_file(char *tst_fname, char *atlas_fname, PALETTE palette)
@@ -268,11 +268,11 @@ void render_items(BITMAP *page, Item_reference item, Item_reference *store, int 
      }
 }
 
-void render_items_on_tile(BITMAP *page, Maptile tile, Item_reference *store, int pdir)
+void render_items_on_tile_closest(BITMAP *page, Maptile tile, Item_reference *store, int pdir)
 {
      unsigned char l[] = {0, 3, 2, 1};
      unsigned char r[] = {1, 2, 0, 3};
-
      render_items(page, tile.item_slots[l[pdir]], store, 27, 103);
      render_items(page, tile.item_slots[r[pdir]], store, 131, 103);
 }
+

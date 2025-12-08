@@ -1,6 +1,11 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+extern unsigned char slot_index_fl[];
+extern unsigned char slot_index_fr[];
+extern unsigned char slot_index_cl[];
+extern unsigned char slot_index_cr[];
+
 int getkey();
 
 int get_x_move_offset(int facing);

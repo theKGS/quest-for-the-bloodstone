@@ -2,6 +2,13 @@
 #include "utils.h"
 #include "map.h"
 
+// lookup tables for slot indices
+// far left, far right, close left, close right
+unsigned char slot_index_fl[4] = {0,3,2,1};
+unsigned char slot_index_fr[4] = {1,2,0,3};
+unsigned char slot_index_cl[4] = {2,1,3,0};
+unsigned char slot_index_cr[4] = {3,0,1,2};
+
 int getkey()
 {
     if (keypressed())
@@ -148,3 +155,4 @@ int horizontal_position(int posx, int posy, int dirp, int ex, int ey)
         return ex - posx;
     }
 }
+
